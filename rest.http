@@ -1,11 +1,11 @@
 ###
 curl http://localhost:3000
 
-###
-curl http://localhost:3000/resolve/did:key:xxxxxxxxxx -X GET 
+### DID Resolver microservice
+curl http://localhost:3000/resolve/did:com:1l6zglh8pvcrjtahsvds2qmfpn0hv83vn8f9cf3
 
 ###
 curl http://localhost:3000/status-checks/list/1 -X GET 
 
 ###
-curl http://localhost:3000/trusted-issuers/did:key:xxxxxxxxxx -X GET 
+curl --verbose http://localhost:3000/trusted-issuers/did:key:xxxxxxxxxx -X GET 

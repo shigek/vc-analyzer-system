@@ -31,51 +31,48 @@ export class MicroserviceRequesterService {
     this.trustedListUrl = url2;
   }
   async getDidDocument(did: string, correlationId: string): Promise<any> {
-    const newCorrelationId = (correlationId) ? correlationId : this.shareService.generateUUID();
     try {
       const response = await axios.get(`${this.didResolverUrl}/resolve/${did}`,
         {
           headers: {
-            'X-Correlation-ID': newCorrelationId,
+            'X-Correlation-ID': correlationId,
             'Content-Type': 'application/json',
           }
         }
       )
       return response.data;
     } catch (error) {
-      throw this.shareService.errorResponse(error, "DID Resolver", newCorrelationId, [did, '']);
+      throw this.shareService.errorResponse(error, "DID Resolver", correlationId, [did, '']);
     }
   }
   async getStatus(listId: string, index: number, correlationId: string): Promise<any> {
-    const newCorrelationId = (correlationId) ? correlationId : this.shareService.generateUUID();
     try {
       const response = await axios.get(`${this.statusListUrl}/status-checks/${listId}/${index}`,
         {
           headers: {
-            'X-Correlation-ID': newCorrelationId,
+            'X-Correlation-ID': correlationId,
             'Content-Type': 'application/json',
           }
         }
       )
       return response.data;
     } catch (error) {
-      throw this.shareService.errorResponse(error, "Status List", newCorrelationId, [listId, `${index}`]);
+      throw this.shareService.errorResponse(error, "Status List", correlationId, [listId, `${index}`]);
     }
   }
   async isTrustedIssuer(did: string, correlationId: string): Promise<any> {
-    const newCorrelationId = (correlationId) ? correlationId : this.shareService.generateUUID();
     try {
       const response = await axios.get(`${this.trustedListUrl}/trusted-issuers/${did}`,
         {
           headers: {
-            'X-Correlation-ID': newCorrelationId,
+            'X-Correlation-ID': correlationId,
             'Content-Type': 'application/json',
           }
         }
       )
       return response.data;
     } catch (error) {
-      throw this.shareService.errorResponse(error, "Trusted List", newCorrelationId, [did, ``]);
+      throw this.shareService.errorResponse(error, "Trusted List", correlationId, [did, ``]);
     }
   }
 }

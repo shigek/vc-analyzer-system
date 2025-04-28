@@ -10,6 +10,15 @@
   "monorepo": true,
   "root": "apps/vc-analyzer-system",
   "projects": {
+    "resolver": {
+      "type": "application",
+      "root": "apps/resolver",
+      "entryFile": "main",
+      "sourceRoot": "apps/resolver/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/resolver/tsconfig.app.json"
+      }
+    },
     "share": {
       "type": "library",
       "root": "libs/share",
