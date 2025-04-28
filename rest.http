@@ -1,3 +1,11 @@
 ###
-
 curl http://localhost:3000
+
+###
+curl http://localhost:3000/resolve/did:key:xxxxxxxxxx -X GET 
+
+###
+curl http://localhost:3000/status-checks/list/1 -X GET 
+
+###
+curl http://localhost:3000/trusted-issuers/did:key:xxxxxxxxxx -X GET 
