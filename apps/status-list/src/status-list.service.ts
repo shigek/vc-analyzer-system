@@ -1,15 +1,20 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, OnApplicationBootstrap, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { StatusListData } from './interfaces/status-list-data.interface';
-import { CreateDao, ShareService } from '@share/share';
+import { ShareService } from '@share/share';
 import { GetStatusResponse } from './response/update';
 import { createSignedStatusListCredential } from './utils/create-signed-status-list-vc';
+import { create } from 'kubo-rpc-client'; // ここで落ちる
 
 @Injectable()
-export class StatusListService {
-  [x: string]: any;
+export class StatusListService implements OnApplicationBootstrap {
   private readonly statusListCredentialMax: number;
   private readonly issuerDid: string;
+  private readonly logger = new Logger(StatusListService.name);
+  private ipfsClient: any;
+  private registryMap = new Map<string, any>();
+  private readonly ipfsPeerUrl: string;
+
   constructor(
     private configService: ConfigService,
     private shareService: ShareService,
@@ -28,6 +33,18 @@ export class StatusListService {
       );
     }
     this.issuerDid = url1;
+    const url2 = this.configService.get<string>('IPFS_PEER_URL');
+    if (!url2) {
+      throw new Error(
+        'IPFS_PEER_URL environment variable is not set.',
+      );
+    }
+    this.ipfsPeerUrl = url2;
+  }
+  async onApplicationBootstrap() {
+    this.logger.log('Application bootstrap completed. Initializing...')
+    this.logger.log('Application bootstrap completed. FinishFinish'); //　これでない
+    this.ipfsClient = create({url: this.ipfsPeerUrl});
   }
 
   async load(
@@ -35,14 +52,24 @@ export class StatusListService {
     index: number,
     correlationId: string,
   ): Promise<any> {
+    const cid = this.registryMap.get(listId);
+    if (!cid) {
+      return new NotFoundException({
+        message: `Status List Not found: ${cid}`,
+        correlationId,
+      });
+    }
     return this.createNewStatusList(1000, correlationId);
   }
 
   async save(
     listId: string,
-    statusListData: StatusListData,
+    signedCredential: string,
     correlationId: string,
   ): Promise<any> {
+    const buffer = Buffer.from(signedCredential, 'utf8');
+    const { cid } = await this.ipfsClient.add(buffer);
+    this.registryMap.set(listId, cid);
     return 'Hello World!';
   }
 
@@ -113,6 +140,7 @@ export class StatusListService {
   }
 
   async generateStatusListData(statusListData: StatusListData, newCorrelationId: string): Promise<any> {
-    return createSignedStatusListCredential(statusListData, this.issuerDid);
+    const signedVC = await createSignedStatusListCredential(statusListData, this.issuerDid);
+    return JSON.stringify(signedVC);
   }
 }

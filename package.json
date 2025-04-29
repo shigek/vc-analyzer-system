@@ -41,6 +41,7 @@
     "jose": "^6.0.10",
     "jsonld-signatures": "^11.5.0",
     "jsrsasign": "^11.1.0",
+    "kubo-rpc-client": "^5.1.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "uint8arrays": "^5.1.0",

@@ -35,6 +35,8 @@
       "sourceRoot": "apps/status-list/src",
       "compilerOptions": {
         "tsConfigPath": "apps/status-list/tsconfig.app.json"
+      },
+      "architect": {
       }
     },
     "vc-analyzer-system": {

@@ -73,9 +73,12 @@ export class StatusListController {
         updateDao.status,
         newCorrelationId,
       );
+
+      const signedCredential =
+        await this.statusListService.generateStatusListData(statusListData, newCorrelationId);
       await this.statusListService.save(
         listId,
-        statusListData,
+        signedCredential,
         newCorrelationId,
       );
       const endTime = process.hrtime(startTime);
@@ -104,10 +107,10 @@ export class StatusListController {
         );
 
       const signedCredential =
-        this.statusListService.generateStatusListData(statusListData, newCorrelationId);
+        await this.statusListService.generateStatusListData(statusListData, newCorrelationId);
       await this.statusListService.save(
         statusListData.id,
-        statusListData,
+        signedCredential,
         newCorrelationId,
       );
       const endTime = process.hrtime(startTime);

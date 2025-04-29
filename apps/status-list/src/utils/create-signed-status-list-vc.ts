@@ -45,6 +45,5 @@ export async function createSignedStatusListCredential(
 
   const suite = new Ed25519Signature2020({ key: keyPair, date: new Date().toISOString() });
   const signedCredential = await issue({credential, suite, documentLoader});
-  console.log(signedCredential);
   return signedCredential;
 }
