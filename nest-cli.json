@@ -28,6 +28,15 @@
         "tsConfigPath": "libs/share/tsconfig.lib.json"
       }
     },
+    "status-list": {
+      "type": "application",
+      "root": "apps/status-list",
+      "entryFile": "main",
+      "sourceRoot": "apps/status-list/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/status-list/tsconfig.app.json"
+      }
+    },
     "vc-analyzer-system": {
       "type": "application",
       "root": "apps/vc-analyzer-system",

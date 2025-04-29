@@ -7,8 +7,8 @@ import { MicroserviceRequesterService } from './services/microservice-requester.
 import { ShareModule } from '@share/share';
 
 @Module({
-  imports: [ShareModule, HttpModule, ConfigModule.forRoot({ isGlobal: true, })],
+  imports: [ShareModule, HttpModule, ConfigModule.forRoot({ isGlobal: true })],
   controllers: [AppController],
   providers: [AppService, MicroserviceRequesterService],
 })
-export class AppModule { }
+export class AppModule {}
