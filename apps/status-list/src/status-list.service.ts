@@ -7,23 +7,18 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { StatusListData } from './interfaces/status-list-data.interface';
-import {
-  DocumentLoader,
-  replaceBit,
-  searchBit,
-  ShareService,
-} from '@share/share';
+import { securityLoader } from '@digitalbazaar/security-document-loader';
+import { replaceBit, searchBit, ShareService } from '@share/share';
 import { createSignedStatusListCredential } from './utils/create-signed-status-list-vc';
 import { createStatusListDatafromVc } from './utils/create-status-list-data-from-vc';
 import path from 'path';
-import { loadRegistry, saveRegistry } from './utils/registry-file-handler';
-import { ResponseDao } from '@share/share';
+import { loadRegistry, saveRegistry, ResponseDao } from '@share/share';
 import { IpfsAccessor } from '@share/share/utils/ipfs-data-accessor';
 import { verifyStatusListSignature } from './utils/vc-verifier';
 
 @Injectable()
 export class StatusListService implements OnApplicationBootstrap {
-  private documentLoader: DocumentLoader;
+  private documentLoader: any;
   private readonly statusListCredentialMax: number;
   private readonly issuerDid: string;
   private readonly logger = new Logger(StatusListService.name);
@@ -37,7 +32,6 @@ export class StatusListService implements OnApplicationBootstrap {
   constructor(
     private configService: ConfigService,
     private shareService: ShareService,
-    @Inject('DOCUMENT_LOADER') documentLoader: DocumentLoader,
   ) {
     const url0 = this.configService.get<string>('STATUS_LIST_CREDENTIA_MAX');
     if (!url0) {
@@ -70,7 +64,8 @@ export class StatusListService implements OnApplicationBootstrap {
       'data',
       'status-list-registry.json',
     );
-    this.documentLoader = documentLoader;
+    const loader = securityLoader();
+    this.documentLoader = loader.build();
   }
   async onApplicationBootstrap() {
     this.logger.log('Application bootstrap completed. Initializing...');
@@ -92,7 +87,7 @@ export class StatusListService implements OnApplicationBootstrap {
     signedCredential: any,
     correlationId: string,
   ): Promise<void> {
-    const cid = await this.ipfsAccessor.addJsonTopfs(signedCredential);
+    const cid = await this.ipfsAccessor.addJsonToIpfs(signedCredential);
     this.registryMap.set(listId, cid.toString());
     try {
       await saveRegistry(this.registryMap, this.registryFilePath);
@@ -204,7 +199,7 @@ export class StatusListService implements OnApplicationBootstrap {
       return { status: false };
     }
     try {
-      const credential = await this.ipfsAccessor.fetchJsonFrompfs(cid);
+      const credential = await this.ipfsAccessor.fetchJsonFromIpfs(cid);
       return { status: true, credential };
     } catch (error) {
       return { status: false, error: error.message };

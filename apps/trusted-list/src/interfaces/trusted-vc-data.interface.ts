@@ -14,6 +14,7 @@ export interface TrustedListDocument {
   issued?: string;
   credentialSubject: {
     id?: string; // credentialSubject の ID
+    validFrom?: string; // 承認が取れた日
     trustedIssuerEntries: TrustedIssuerEntry[]; // エントリの配列
     // 将来追加されるであろう他のクレームもここに追加
   };

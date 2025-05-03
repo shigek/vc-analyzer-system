@@ -1,15 +1,14 @@
 import vc from '@digitalbazaar/vc';
-import { securityLoader } from '@digitalbazaar/security-document-loader';
 import { Ed25519VerificationKey2020 } from '@digitalbazaar/ed25519-verification-key-2020';
 import { Ed25519Signature2020 } from '@digitalbazaar/ed25519-signature-2020';
 import { v4 as uuidv4 } from 'uuid';
 import { addYear } from '@share/share';
 
-const documentLoader = securityLoader().build();
 export async function createSignedTrustedListCredential(
   issuerDid: string,
   subjectDid: string,
   years: number,
+  documentLoader: any,
 ): Promise<vc.VerifableCredential> {
   const credential = {
     '@context': [
@@ -17,13 +16,14 @@ export async function createSignedTrustedListCredential(
       'https://w3id.org/security/suites/ed25519-2020/v1',
     ],
     id: `urn:uuid:${uuidv4()}`,
-    type: ['VerifiableCredential'],
+    type: ['VerifiableCredential', 'TrustedListCredential'],
     issuer: issuerDid,
     issuanceDate: new Date().toISOString(),
     credentialSubject: {
       id: subjectDid,
+      type: 'TrustedList2025',
       validFrom: new Date().toISOString(),
-      trustedIssuerEntry: [
+      trustedIssuerEntries: [
         {
           validUntil: addYear(new Date(), years),
         },

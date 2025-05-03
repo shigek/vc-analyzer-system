@@ -1,4 +1,4 @@
-import { create, IPFSHTTPClient } from 'kubo-rpc-client';
+import { CID, create, IPFSHTTPClient } from 'kubo-rpc-client';
 
 export class IpfsAccessor {
   private readonly ipfsClient: IPFSHTTPClient;
@@ -26,7 +26,7 @@ export class IpfsAccessor {
       );
     }
   }
-  async addJsonToIpfs(jsonData: any): Promise<any> {
+  async addJsonToIpfs(jsonData: any): Promise<CID> {
     try {
       // 1. jsonDataをストリングにする
       const jsonString = JSON.stringify(jsonData);

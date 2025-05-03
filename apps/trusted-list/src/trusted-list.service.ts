@@ -2,20 +2,25 @@ import {
   Injectable,
   OnApplicationBootstrap,
   Logger,
-  Inject,
+  HttpException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { loadRegistry } from './utils/registry-file-handler';
 import path from 'path';
-import { isAfterDay, ResponseDao } from '@share/share';
+import {
+  isAfterDay,
+  ResponseDao,
+  saveRegistry,
+  loadRegistry,
+} from '@share/share';
 import { IpfsAccessor } from '@share/share/utils/ipfs-data-accessor';
-import { DocumentLoader } from '@share/share/did/document-loader';
 import { verifyTrustedListSignature } from './utils/vc-verifier';
 import { createSignedTrustedListCredential } from './utils/create-signed-trusted-list-vc';
+import { securityLoader } from '@digitalbazaar/security-document-loader';
 import {
   TrustedIssuerEntry,
   TrustedListDocument,
 } from './interfaces/trusted-vc-data.interface';
+import { trastedListContext } from './context/trusted-list-context';
 
 @Injectable()
 export class TrustedListService implements OnApplicationBootstrap {
@@ -26,15 +31,12 @@ export class TrustedListService implements OnApplicationBootstrap {
   private readonly trustedServiceProviderDid: string;
   private readonly logger = new Logger(TrustedListService.name);
   private registryFilePath: string;
-  private documentLoader: DocumentLoader;
+  private documentLoader: any;
   private responseDao: ResponseDao = {
     serviceMetaData: {},
   };
 
-  constructor(
-    private configService: ConfigService,
-    @Inject('DOCUMENT_LOADER') documentLoader: DocumentLoader,
-  ) {
+  constructor(private configService: ConfigService) {
     const url2 = this.configService.get<string>('IPFS_PEER_URL');
     if (!url2) {
       throw new Error('IPFS_PEER_URL environment variable is not set.');
@@ -48,7 +50,7 @@ export class TrustedListService implements OnApplicationBootstrap {
       __dirname,
       url3,
       'data',
-      'status-list-registry.json',
+      'trusted-list-registry.json',
     );
     const url4 = this.configService.get<string>(
       'REGISTRATION_LICENSE_EXPIRATION',
@@ -66,7 +68,10 @@ export class TrustedListService implements OnApplicationBootstrap {
       );
     }
     this.trustedServiceProviderDid = url5;
-    this.documentLoader = documentLoader;
+
+    const loader = securityLoader();
+    //loader.addDocuments({ documents: [...trastedListContext] });
+    this.documentLoader = securityLoader().build();
   }
 
   async onApplicationBootstrap() {
@@ -75,7 +80,7 @@ export class TrustedListService implements OnApplicationBootstrap {
     this.logger.log('Application bootstrap completed. FinishFinish');
     await this.load();
   }
-  async load(): Promise<void> {
+  private async load(): Promise<void> {
     try {
       this.registryMap = await loadRegistry(this.registryFilePath);
     } catch (error) {
@@ -83,83 +88,137 @@ export class TrustedListService implements OnApplicationBootstrap {
     }
   }
 
+  getCurrentTrustedCid(subjectDid: string): any {
+    const currentTrustedListCid = this.registryMap.get(subjectDid);
+    return currentTrustedListCid;
+  }
+
   async getTrustedListAndFilter(
     subjectDid: string,
     correlationId: string,
   ): Promise<any> {
-    const currentTrustedListCid = this.registryMap.get(subjectDid);
-    let trustedListData: TrustedListDocument;
+    let currentTrustedListCid = this.registryMap.get(subjectDid);
     try {
-      createSignedTrustedListCredential(
-        this.trustedServiceProviderDid,
-        subjectDid,
-        this.registrationLicenseExpiration,
-      );
       if (!currentTrustedListCid) {
         this.responseDao.serviceMetaData['detail'] = 'Tristed Data not found.';
-        return { ...this.responseDao, status: 'unknown' };
+        throw new HttpException(
+          {
+            status: 'unknown',
+          },
+          404,
+        );
       }
-      trustedListData = (await this.ipfsAccessor.fetchJsonFromIpfs(
+      const trustedListData = (await this.ipfsAccessor.fetchJsonFromIpfs(
         currentTrustedListCid,
       )) as TrustedListDocument;
-      const isSignatureValid =
-        await verifyTrustedListSignature(trustedListData);
-      if (!isSignatureValid) {
-        this.responseDao.serviceMetaData['detail'] =
-          'Signature is valid. Proceeding to filter.';
-        return { ...this.responseDao, status: 'not-trusted' };
-      }
-
-      if (subjectDid !== trustedListData?.credentialSubject.id) {
-        this.responseDao.serviceMetaData['detail'] =
-          'The subject DID does not match.';
-        return { ...this.responseDao, status: 'not-trusted' };
-      }
-
-      const allEntries: TrustedIssuerEntry[] =
-        trustedListData.credentialSubject?.trustedIssuerEntries || [];
-      if (!Array.isArray(allEntries)) {
-        console.error(
-          'trustedIssuerEntries is not an array in the fetched data.',
+      const isValidSignature = await verifyTrustedListSignature(
+        trustedListData,
+        this.documentLoader,
+      );
+      if (!isValidSignature) {
+        throw new HttpException(
+          {
+            status: 'not-trusted',
+            message: 'Invalid Trusted List signature.',
+            fetchedCid: currentTrustedListCid,
+          },
+          451,
         );
-        this.responseDao.serviceMetaData['detail'] =
-          'trustedIssuerEntries is not an array in the fetched data.';
-        return { ...this.responseDao, status: 'unknown' };
       }
-      const validEntries = allEntries.filter((entry) => {
-        if (!entry.validUntil || typeof entry.validUntil !== 'string') {
-          this.logger.warn(`Entry missing or invalid validUntil:`, entry);
-          this.responseDao.serviceMetaData['detail'] =
-            `Entry missing or invalid validUntil: ${entry}`;
-          return false;
-        }
-        try {
-          const validUntilDate = new Date(entry.validUntil);
-          if (isNaN(validUntilDate.getTime())) {
-            console.warn(
-              `Entry has unparsable validUntil date string: ${entry.validUntil}`,
-              entry,
-            );
-            return false;
-          }
-          const isFuture = isAfterDay(validUntilDate);
-          return isFuture;
-        } catch (parseError) {
-          console.error(
-            `Error parsing validUntil date string: ${entry.validUntil}`,
-            parseError,
+      if (subjectDid !== trustedListData?.credentialSubject.id) {
+        throw new HttpException(
+          {
+            status: 'not-trusted',
+            message: 'The subject DID does not match.',
+            fetchedCid: currentTrustedListCid,
+          },
+          451,
+        );
+      }
+      this.logger.log('Signature is valid. Proceeding to filter.');
+      const entry: TrustedIssuerEntry =
+        trustedListData.credentialSubject?.trustedIssuerEntries[0] || undefined;
+      if (!entry) {
+        throw new HttpException(
+          {
+            status: 'not-trusted',
+            message: 'TrustedIssuerEntry is not found.',
+            fetchedCid: currentTrustedListCid,
+          },
+          451,
+        );
+      }
+      if (!entry.validUntil || typeof entry.validUntil !== 'string') {
+        this.logger.warn(`Entry missing or invalid validUntil:`, entry);
+        throw new HttpException(
+          {
+            status: 'not-trusted',
+            message: 'Entry missing or invalid validUntil: ${entry}',
+            fetchedCid: currentTrustedListCid,
+          },
+          451,
+        );
+      }
+      try {
+        const validUntilDate = new Date(entry.validUntil);
+        if (isNaN(validUntilDate.getTime())) {
+          this.logger.warn(
+            `Entry has unparsable validUntil date string: ${entry.validUntil}`,
             entry,
           );
-          this.responseDao.serviceMetaData['detail'] =
-            `Error parsing validUntil date string: ${entry.validUntil}`;
-          return false;
+          throw new HttpException(
+            {
+              status: 'not-trusted',
+              message: `Entry has unparsable validUntil date string: ${entry.validUntil}`,
+              fetchedCid: currentTrustedListCid,
+            },
+            451,
+          );
         }
-      });
-      this.logger.log(`Filtered down to ${validEntries.length} valid entries.`);
-      return { ...this.responseDao, status: 'trusted' };
+        const isFuture = isAfterDay(validUntilDate);
+        if (!isFuture) {
+          throw new HttpException(
+            {
+              status: 'not-trusted',
+              message: `Validity period has expired: ${entry.validUntil}`,
+              fetchedCid: currentTrustedListCid,
+            },
+            451,
+          );
+        }
+      } catch (parseError) {
+        console.error(
+          `Error parsing validUntil date string: ${entry.validUntil}`,
+          parseError,
+          entry,
+        );
+        throw new HttpException(
+          {
+            status: 'not-trusted',
+            message: `Error parsing validUntil date string: ${entry.validUntil}`,
+            fetchedCid: currentTrustedListCid,
+          },
+          451,
+        );
+      }
+      return {
+        trustedIssuer: {
+          trustedIssuerDid: trustedListData?.credentialSubject.id,
+          validUntil: entry.validUntil,
+        },
+        status: 'trusted',
+        statusCode: 200,
+        fetchedCid: currentTrustedListCid,
+      };
     } catch (error) {
       this.logger.error('Error in getTrustedListAndFilter:', error);
-      return { ...this.responseDao, status: 'unknown', error: error.message };
+      throw new HttpException(
+        {
+          status: 'unknown',
+          message: `An unexpected error occurred. prease contact support.`,
+        },
+        500,
+      );
     }
   }
 }
