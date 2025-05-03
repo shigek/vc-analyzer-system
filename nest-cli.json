@@ -1,14 +1,14 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "apps/vc-analyzer-system/src",
+  "sourceRoot": "apps/gateway/src",
   "compilerOptions": {
     "deleteOutDir": true,
     "webpack": true,
-    "tsConfigPath": "apps/vc-analyzer-system/tsconfig.app.json"
+    "tsConfigPath": "apps/gateway/tsconfig.app.json"
   },
   "monorepo": true,
-  "root": "apps/vc-analyzer-system",
+  "root": "apps/gateway",
   "projects": {
     "resolver": {
       "type": "application",
@@ -35,17 +35,24 @@
       "sourceRoot": "apps/status-list/src",
       "compilerOptions": {
         "tsConfigPath": "apps/status-list/tsconfig.app.json"
-      },
-      "architect": {
+      }
+    },
+    "trusted-list": {
+      "type": "application",
+      "root": "apps/trusted-list",
+      "entryFile": "main",
+      "sourceRoot": "apps/trusted-list/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/trusted-list/tsconfig.app.json"
       }
     },
     "vc-analyzer-system": {
       "type": "application",
-      "root": "apps/vc-analyzer-system",
+      "root": "apps/gateway",
       "entryFile": "main",
-      "sourceRoot": "apps/vc-analyzer-system/src",
+      "sourceRoot": "apps/gateway/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/vc-analyzer-system/tsconfig.app.json"
+        "tsConfigPath": "apps/gateway/tsconfig.app.json"
       }
     }
   }

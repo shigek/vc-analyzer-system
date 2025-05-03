@@ -33,17 +33,20 @@ export async function createSignedStatusListCredential(
   };
 
   const publicKeyMultibase = issuerDid.split(':')[2];
-  const controller = 'https://example.edu/issuers/565049';
+  const controller = issuerDid;
   const keyPair = await Ed25519VerificationKey2020.from({
     type: 'Ed25519VerificationKey2020',
     controller,
-    id: controller + `#${publicKeyMultibase}`,
+    id: controller + `${issuerDid}#${publicKeyMultibase}`,
     publicKeyMultibase,
-    privateKeyMultibase: 'zrv2EET2WWZ8T1Jbg4fEH5cQxhbUS22XxdweypUbjWVzv1YD6VqYu' +
-      'W6LH7heQCNYQCuoKaDwvv2qCWz3uBzG2xesqmf'
+    privateKeyMultibase:
+      'zrv2uK2DewUDNDzpfPskZ38q1o25eNEbNMcMrVyFFTuQuKLToJQ9d8ncjGoeneDC1JKPY3DEuQwYnkZzthCH1Sd8e2k',
   });
 
-  const suite = new Ed25519Signature2020({ key: keyPair, date: new Date().toISOString() });
-  const signedCredential = await issue({credential, suite, documentLoader});
+  const suite = new Ed25519Signature2020({
+    key: keyPair,
+    date: new Date().toISOString(),
+  });
+  const signedCredential = await issue({ credential, suite, documentLoader });
   return signedCredential;
 }

@@ -1,5 +1,3 @@
-import * as file from '../utils/file';
-
 // Load your private key
 // const pem = file.readFile('./.certs/key/did-key.private.pem');
 // const jwk = JSON.parse(file.readFile('./.certs/key/did-key-jwk.json'));

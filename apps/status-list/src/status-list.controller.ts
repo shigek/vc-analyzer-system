@@ -9,7 +9,9 @@ import {
   Post,
 } from '@nestjs/common';
 import { StatusListService } from './status-list.service';
-import { ShareService, UpdateDao, CreateDao } from '@share/share';
+import { ShareService } from '@share/share';
+import { CreateDao } from './dao/create';
+import { UpdateDao } from './dao/update';
 import { Response } from 'express';
 import { StatusListData } from './interfaces/status-list-data.interface';
 
@@ -31,20 +33,18 @@ export class StatusListController {
       : this.shareService.generateUUID();
     try {
       const startTime = process.hrtime();
-      const statusListData = await this.statusListService.load(
+      const response = await this.statusListService.verifyStatus(
         listId,
-        index,
-        newCorrelationId,
-      );
-      const status = await this.statusListService.getStatus(
-        statusListData,
         index,
         newCorrelationId,
       );
       const endTime = process.hrtime(startTime);
       res.setHeader('X-Correlation-ID', newCorrelationId);
       const timeTaskMs = (endTime[0] * 1e9 + endTime[1]) / 1e6;
-      return res.send({ status, serviceMetadata: { timeTaskMs } });
+      return res.send({
+        status: response['status'],
+        serviceMetadata: { ...response.serviceMetaData, timeTaskMs },
+      });
     } catch (error) {
       throw error;
     }
@@ -62,9 +62,8 @@ export class StatusListController {
       : this.shareService.generateUUID();
     try {
       const startTime = process.hrtime();
-      const statusListData: StatusListData = await this.statusListService.load(
+      const statusListData: StatusListData = await this.statusListService.fetch(
         listId,
-        index,
         newCorrelationId,
       );
       const status = this.statusListService.setStatus(
@@ -73,9 +72,11 @@ export class StatusListController {
         updateDao.status,
         newCorrelationId,
       );
-
       const signedCredential =
-        await this.statusListService.generateStatusListData(statusListData, newCorrelationId);
+        await this.statusListService.generateStatusListData(
+          statusListData,
+          newCorrelationId,
+        );
       await this.statusListService.save(
         listId,
         signedCredential,
@@ -101,13 +102,16 @@ export class StatusListController {
     try {
       const startTime = process.hrtime();
       const statusListData: StatusListData =
-        await this.statusListService.createNewStatusList(
+        this.statusListService.createNewStatusList(
           createDao.credentials,
           newCorrelationId,
         );
 
       const signedCredential =
-        await this.statusListService.generateStatusListData(statusListData, newCorrelationId);
+        await this.statusListService.generateStatusListData(
+          statusListData,
+          newCorrelationId,
+        );
       await this.statusListService.save(
         statusListData.id,
         signedCredential,

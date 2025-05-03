@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
-import { StatusListController } from './status-list.controller';
-import { StatusListService } from './status-list.service';
+import { TrustedListController } from './trusted-list.controller';
+import { TrustedListService } from './trusted-list.service';
 import { ConfigModule } from '@nestjs/config';
 import { ShareModule } from '@share/share/share.module';
 import { DidModule } from '@share/share/did/did.module';
 
 @Module({
   imports: [ShareModule, DidModule, ConfigModule.forRoot({ isGlobal: true })],
-  controllers: [StatusListController],
-  providers: [StatusListService],
+  controllers: [TrustedListController],
+  providers: [TrustedListService],
 })
-export class StatusListModule {}
+export class TrustedListModule {}

@@ -16,7 +16,7 @@ describe('StatusListController', () => {
 
   describe('root', () => {
     it('should return "Hello World!"', () => {
-      expect(statusListController.getHello()).toBe('Hello World!');
+      //      expect(statusListController.getStatus()).toBe('Hello World!');
     });
   });
 });

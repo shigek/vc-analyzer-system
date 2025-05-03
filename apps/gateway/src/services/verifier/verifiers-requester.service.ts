@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { CreateDao, ShareService, UpdateDao } from '@share/share';
+import { ShareService } from '@share/share';
 import axios from 'axios';
 
 @Injectable()
-export class MicroserviceRequesterService {
+export class VerifiersRequesterService {
   private readonly didResolverUrl: string;
   private readonly statusListUrl: string;
   private readonly trustedListUrl: string;
@@ -94,64 +94,6 @@ export class MicroserviceRequesterService {
         'Trusted List',
         correlationId,
         [did, ``],
-      );
-    }
-  }
-  async createStatusList(
-    createDao: CreateDao,
-    correlationId: string,
-  ): Promise<any> {
-    try {
-      const response = await axios.post(
-        `${this.statusListUrl}/status-lists/register`,
-        {
-          listId: createDao.listId,
-          index: createDao.index,
-          status: createDao.status,
-        },
-        {
-          headers: {
-            'X-Correlation-ID': correlationId,
-            'Content-Type': 'application/json',
-          },
-        },
-      );
-      return response.data;
-    } catch (error) {
-      throw this.shareService.errorResponse(
-        error,
-        'Status List',
-        correlationId,
-        [``, ``],
-      );
-    }
-  }
-  async updateStatus(
-    listId: string,
-    index: number,
-    updateDao: UpdateDao,
-    correlationId: string,
-  ): Promise<any> {
-    try {
-      const response = await axios.put(
-        `${this.statusListUrl}/status-lists/${listId}/entries/${index}/status`,
-        {
-          status: updateDao.status,
-        },
-        {
-          headers: {
-            'X-Correlation-ID': correlationId,
-            'Content-Type': 'application/json',
-          },
-        },
-      );
-      return response.data;
-    } catch (error) {
-      throw this.shareService.errorResponse(
-        error,
-        'Status List',
-        correlationId,
-        [``, ``],
       );
     }
   }
