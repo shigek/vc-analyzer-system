@@ -97,5 +97,6 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 
-
  at safeEventHandler (C:\Users\shige\analyzer\analyzer\node_modules\jsonld\lib\events.js:135:11)
+
+C:\Users\shige\analyzer\analyzer\node_modules\jsonld-signatures\lib\documentLoader.js:48:20

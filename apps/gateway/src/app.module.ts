@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
+import { ContextController } from './public/context.controller';
 import { PublicAnalyzerController } from './public/public.controller';
 import { PrivateAnalyzerController } from './private/private.controller';
 
@@ -15,6 +16,7 @@ import { IssuersRequesterService } from './services/issuer/issuers-requester.ser
   imports: [ShareModule, HttpModule, ConfigModule.forRoot({ isGlobal: true })],
   controllers: [
     AppController,
+    ContextController,
     PrivateAnalyzerController,
     PublicAnalyzerController,
   ],

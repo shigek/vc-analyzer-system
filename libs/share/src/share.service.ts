@@ -5,12 +5,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
-import { v4 as uuidv4 } from 'uuid';
-import { ErrorResponseDao } from './interfaces/error-response-dao';
 
 @Injectable()
 export class ShareService {
-  private errorResponseDao: ErrorResponseDao = {
+  private errorResponseDao = {
     message: '',
     code: '',
     correlationId: '',
@@ -98,8 +96,5 @@ export class ShareService {
         statusCode: 500,
       });
     }
-  }
-  generateUUID(): string {
-    return uuidv4();
   }
 }

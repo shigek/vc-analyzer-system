@@ -1,6 +1,6 @@
 import vc from '@digitalbazaar/vc';
 import { Ed25519Signature2020 } from '@digitalbazaar/ed25519-signature-2020';
-export async function verifyTrustedListSignature(
+export async function verifySignature(
   credential: any,
   documentLoader: any,
 ): Promise<boolean> {

@@ -1,0 +1,16 @@
+{
+  "@context": {
+    "vc-analyzer": "http://localhost:3000/contexts/trusted-list/v1#",
+    "TrustedListCredential": {
+      "@id": "vc-analyzer:TrustedListCredential",
+      "@type": "@id"
+    },
+    "TrustedList2025": {
+      "@id": "vc-analyzer:TrustedList2025",
+      "@type": "@id"
+    },
+    "trustedIssuerEntry": {
+      "@id": "vc-analyzer:trustedIssuerEntry"
+    }
+  }
+}

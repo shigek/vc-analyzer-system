@@ -1,0 +1,16 @@
+{
+  "@context": {
+    "vc-analyzer": "https://vc-analyzer.example.com/contexts/trusted-list/v1",
+    "TrustedListCredential": {
+      "@id": "https://vc-analyzer.example.com/contexts/trusted-list/v1#TrustedListCredential",
+      "@type": "@id"
+    },
+    "TrustedList2025": {
+      "@id": "https://vc-analyzer.example.com/contexts/trusted-list/v1#TrustedList2025",
+      "@type": "@id"
+    },
+    "trustedIssuerEntry": {
+      "@id": "https://vc-analyzer.example.com/contexts/trusted-list/v1#trustedIssuerEntry"
+    }
+  }
+}

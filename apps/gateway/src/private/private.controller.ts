@@ -8,7 +8,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { IssuersRequesterService } from '../services/issuer/issuers-requester.service';
-import { ShareService } from '@share/share';
+import { generateUUID, ShareService } from '@share/share';
 
 @Controller('issuers')
 export class PrivateAnalyzerController {
@@ -23,9 +23,7 @@ export class PrivateAnalyzerController {
     @Headers('X-Correlation-ID') correlationId: string,
     @Body() createDao: any,
   ): any {
-    const newCorrelationId = correlationId
-      ? correlationId
-      : this.shareService.generateUUID();
+    const newCorrelationId = correlationId ? correlationId : generateUUID();
     return this.issuersRequesterService.createStatusList(
       createDao,
       newCorrelationId,
@@ -39,9 +37,7 @@ export class PrivateAnalyzerController {
     @Param('index') index: number,
     @Body() updateDao: any,
   ): Promise<any> {
-    const newCorrelationId = correlationId
-      ? correlationId
-      : this.shareService.generateUUID();
+    const newCorrelationId = correlationId ? correlationId : generateUUID();
     return this.issuersRequesterService.updateStatus(
       listId,
       index,

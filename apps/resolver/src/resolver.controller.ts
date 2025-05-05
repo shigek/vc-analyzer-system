@@ -1,6 +1,6 @@
 import { Controller, Get, Headers, Param, Res } from '@nestjs/common';
 import { ResolverService } from './resolver.service';
-import { ShareService } from '@share/share';
+import { generateUUID, ShareService } from '@share/share';
 import { Response } from 'express';
 
 @Controller('resolve')
@@ -16,9 +16,7 @@ export class ResolverController {
     @Param('did') did: string,
     @Res() res: Response,
   ): Promise<any> {
-    const newCorrelationId = correlationId
-      ? correlationId
-      : this.shareService.generateUUID();
+    const newCorrelationId = correlationId ? correlationId : generateUUID();
     try {
       const startTime = process.hrtime();
       const didDocument = await this.resolverService.getDidDocument(

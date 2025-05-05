@@ -1,7 +1,7 @@
 import { Controller, Get, Headers, Param, Res, Logger } from '@nestjs/common';
 import { VerifiersRequesterService } from '../services/verifier/verifiers-requester.service';
 
-import { ShareService } from '@share/share';
+import { generateUUID, ShareService } from '@share/share';
 import { Response } from 'express';
 
 @Controller('verifiers')
@@ -18,9 +18,7 @@ export class PublicAnalyzerController {
     @Res() res: Response,
   ): Promise<any> {
     try {
-      const newCorrelationId = correlationId
-        ? correlationId
-        : this.shareService.generateUUID();
+      const newCorrelationId = correlationId ? correlationId : generateUUID();
       res.setHeader('X-Correlation-ID', newCorrelationId);
       res.send(
         await this.verifiersRequesterService.getDidDocument(
@@ -40,9 +38,7 @@ export class PublicAnalyzerController {
     @Res() res: Response,
   ): Promise<any> {
     try {
-      const newCorrelationId = correlationId
-        ? correlationId
-        : this.shareService.generateUUID();
+      const newCorrelationId = correlationId ? correlationId : generateUUID();
       res.setHeader('X-Correlation-ID', newCorrelationId);
       res.send(
         await this.verifiersRequesterService.getDidDocument(
@@ -61,9 +57,7 @@ export class PublicAnalyzerController {
     @Param('listId') listId: string,
     @Param('index') index: number,
   ): any {
-    const newCorrelationId = correlationId
-      ? correlationId
-      : this.shareService.generateUUID();
+    const newCorrelationId = correlationId ? correlationId : generateUUID();
     return this.verifiersRequesterService.getStatus(
       listId,
       index,
@@ -75,9 +69,7 @@ export class PublicAnalyzerController {
     @Headers('X-Correlation-ID') correlationId: string,
     @Param('did') did: string,
   ): any {
-    const newCorrelationId = correlationId
-      ? correlationId
-      : this.shareService.generateUUID();
+    const newCorrelationId = correlationId ? correlationId : generateUUID();
     return this.verifiersRequesterService.isTrustedIssuer(
       did,
       newCorrelationId,

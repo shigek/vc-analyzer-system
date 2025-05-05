@@ -1,38 +1,23 @@
 export const context = {
   '@context': {
-    '@protected': true,
-    TrustedList2025Credential: {
-      '@id': 'https://example.com/trasted-list/TrustedList2025Credential',
+    'vc-analyzer': 'https://vc-analyzer.example.com/contexts/trusted-list/v1',
+    cred: 'https://www.w3.org/2018/credentials#',
+    trast: 'https://vc-analyzer.example.com/contexts/trusted-list/v1#',
+    TrustedListCredential: {
+      '@id': 'trast:TrustedListCredential',
+      '@type': '@id',
+    },
+    TrustedList2025: {
+      '@id': 'trast:TrustedList2025',
+      '@type': '@id',
       '@context': {
-        '@protected': true,
-
-        id: '@id',
-        type: '@type',
-
-        description: 'http://schema.org/description',
-        name: 'http://schema.org/name',
+        validFrom: 'trast:validFrom',
       },
     },
-    TrastedList2025: {
-      '@id': 'https://example.com/trasted-list/TrustedList2025Credential',
+    trustedIssuerEntry: {
+      '@id': 'trast:trustedIssuerEntry',
       '@context': {
-        '@protected': true,
-
-        id: '@id',
-        type: 'TrastedList2025',
-
-        validFrom: {
-          '@id': 'https://schema.org/validFrom',
-          '@type': 'https://schema.org/DateTime',
-        },
-        validUntil: {
-          '@id': 'https://schema.org/expires',
-          '@type': 'https://schema.org/DateTime',
-        },
-        trustedIssuerEntries: {
-          '@id': 'trustedIssuerEntries',
-          '@type': 'array',
-        },
+        validUntil: 'trast:validUntil',
       },
     },
   },

@@ -1,20 +1,36 @@
 import {
   Injectable,
-  BadRequestException,
   OnApplicationBootstrap,
   Logger,
-  Inject,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { StatusListData } from './interfaces/status-list-data.interface';
+import {
+  StatusListData,
+  StatusListVerifableCredential,
+} from './interfaces/status-list-data.interface';
 import { securityLoader } from '@digitalbazaar/security-document-loader';
-import { replaceBit, searchBit, ShareService } from '@share/share';
-import { createSignedStatusListCredential } from './utils/create-signed-status-list-vc';
-import { createStatusListDatafromVc } from './utils/create-status-list-data-from-vc';
+import { replaceBit, searchBit } from '@share/share';
+import { signedCredential } from './utils/signed-status-list-vc';
+import { transferStatusListDatafromVc } from './utils/transfer-status-list-data-from-vc';
 import path from 'path';
-import { loadRegistry, saveRegistry, ResponseDao } from '@share/share';
+import { loadRegistry, saveRegistry } from '@share/share';
 import { IpfsAccessor } from '@share/share/utils/ipfs-data-accessor';
-import { verifyStatusListSignature } from './utils/vc-verifier';
+import { verifySignature } from '@share/share/utils/jsonld-verifier';
+import { randomUUID } from 'crypto';
+import {
+  RegistrationErrorDetails,
+  VerificationErrorDetails,
+} from '@share/share/interfaces/response/error-response.interface';
+import {
+  CODE_MESSAGES,
+  ERROR_MESSAGES,
+  RESOURCE_TYPE,
+  ResourceArgs,
+  STATUS_CODE,
+} from '@share/share/common/message/error-message';
+import { contexts as statusListContexts } from './context';
 
 @Injectable()
 export class StatusListService implements OnApplicationBootstrap {
@@ -26,13 +42,7 @@ export class StatusListService implements OnApplicationBootstrap {
   private registryMap: Map<string, string>;
   private readonly ipfsPeerUrl: string;
   private registryFilePath: string;
-  private responseDao: ResponseDao = {
-    serviceMetaData: {},
-  };
-  constructor(
-    private configService: ConfigService,
-    private shareService: ShareService,
-  ) {
+  constructor(private configService: ConfigService) {
     const url0 = this.configService.get<string>('STATUS_LIST_CREDENTIA_MAX');
     if (!url0) {
       throw new Error(
@@ -65,6 +75,7 @@ export class StatusListService implements OnApplicationBootstrap {
       'status-list-registry.json',
     );
     const loader = securityLoader();
+    loader.addDocuments({ documents: [...statusListContexts] });
     this.documentLoader = loader.build();
   }
   async onApplicationBootstrap() {
@@ -82,127 +93,311 @@ export class StatusListService implements OnApplicationBootstrap {
     }
   }
 
-  async save(
+  async registration(
     listId: string,
-    signedCredential: any,
-    correlationId: string,
-  ): Promise<void> {
-    const cid = await this.ipfsAccessor.addJsonToIpfs(signedCredential);
-    this.registryMap.set(listId, cid.toString());
+    signedCredential: StatusListVerifableCredential,
+    modify: boolean
+  ): Promise<{ fetchedCid: string; status: string }> {
+    const errors: RegistrationErrorDetails[] = [];
     try {
+      // 1.登録済みの確認
+      const currentStatusListCid = this.registryMap.get(listId);
+      if (currentStatusListCid && !modify) {
+        errors.push({
+          message: `Trusted issuer with DID ${listId} already exists in registory.`,
+        });
+        throw new HttpException(errors, HttpStatus.BAD_REQUEST);
+      }
+      // 2.IPFSへデータを登録する。
+      const cid = await this.ipfsAccessor.addJsonToIpfs(signedCredential);
+
+      // 3.Registryに登録
+      this.registryMap.set(listId, cid.toString());
       await saveRegistry(this.registryMap, this.registryFilePath);
+      return { fetchedCid: cid.toString(), status: STATUS_CODE.VALID };
     } catch (error) {
-      this.logger.error('Error saving registry after update:', error);
+      this.logger.error('Error in registration:', error);
+      if (error instanceof HttpException) {
+        throw new HttpException(
+          {
+            code: 'STATUS_LIST_REGISTRATION',
+            message: 'registration faild',
+            registrationErrors: error.getResponse(),
+          },
+          error.getStatus(),
+        );
+      }
+      throw new HttpException(
+        {
+          message: ERROR_MESSAGES.INTERNAL_ERROR,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
-  createNewStatusList(
-    credentials: number,
-    correlationId: string,
-  ): StatusListData {
-    const byteLength = Math.ceil(credentials / 8);
+  async readIpfsDataAndNotFoundError(listId: string): Promise<{
+    credential: StatusListVerifableCredential;
+    currentStatusListCid: string;
+  }> {
+    const errors: RegistrationErrorDetails[] = [];
+    const resurceArgs: ResourceArgs = {
+      resourceType: RESOURCE_TYPE.STATUS_LIST,
+      identifier: listId,
+    };
+    try {
+      const currentStatusListCid = this.registryMap.get(listId);
+      if (!currentStatusListCid) {
+        errors.push({
+          message: ERROR_MESSAGES.RESOURCE_NOT_FOUND(resurceArgs),
+        });
+        throw new HttpException(
+          { code: CODE_MESSAGES.VC_VERIFICATIN_FIELD, errors },
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      const credential = (await this.ipfsAccessor.fetchJsonFromIpfs(
+        currentStatusListCid!,
+      )) as StatusListVerifableCredential;
+      return { credential, currentStatusListCid };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error('Error in readIpfsData:', error);
+      throw new HttpException(
+        {
+          message: ERROR_MESSAGES.INTERNAL_ERROR,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+  async readIpfsDataAndAlredyError(
+    listId: string,
+  ): Promise<StatusListVerifableCredential> {
+    const errors: RegistrationErrorDetails[] = [];
+    try {
+      const currentStatusListCid = this.registryMap.get(listId);
+      if (currentStatusListCid) {
+        errors.push({
+          message: `Status list with List ID ${listId} already exists in registory.`,
+        });
+        throw new HttpException(errors, HttpStatus.BAD_REQUEST);
+      }
+      const credential = (await this.ipfsAccessor.fetchJsonFromIpfs(
+        currentStatusListCid!,
+      )) as StatusListVerifableCredential;
+      return credential;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw new HttpException(
+          {
+            code: 'STATUS_LIST_IPFS_READ_FAILD',
+            message: 'already exists faild',
+            registrationErrors: error.getResponse(),
+          },
+          error.getStatus(),
+        );
+      }
+      this.logger.error('Error in readIpfsData:', error);
+      throw new HttpException(
+        {
+          message: ERROR_MESSAGES.INTERNAL_ERROR,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+  async verifyProofAndId(
+    listId: string,
+    credential: StatusListVerifableCredential,
+  ): Promise<boolean> {
+    const errors: VerificationErrorDetails[] = [];
+    try {
+      const isValidSignature = await verifySignature(
+        credential,
+        this.documentLoader,
+      );
+      if (!isValidSignature) {
+        errors.push({
+          status: ERROR_MESSAGES.UNKNOWN,
+          message: 'Invalid status list signature.',
+        });
+        throw new HttpException(
+          { code: CODE_MESSAGES.VC_VERIFICATIN_FIELD, errors },
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
+      }
+      if (listId !== credential?.credentialSubject.id) {
+        errors.push({
+          status: ERROR_MESSAGES.UNKNOWN,
+          message: `List id does not match: Req(${listId}) Res(${credential?.credentialSubject.id})`,
+        });
+        throw new HttpException(
+          { code: CODE_MESSAGES.VC_VERIFICATIN_FIELD, errors },
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
+      }
+      return true;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error('Error in verifyProofAndId:', error);
+      throw new HttpException(
+        {
+          message: ERROR_MESSAGES.INTERNAL_ERROR,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  createStatusList(bitSize: number): StatusListData {
+    const byteLength = Math.ceil(bitSize / 8);
     const bitstringBuffer = Buffer.alloc(byteLength);
-    const newStatusList: StatusListData = {
-      id: `urn:${this.shareService.generateUUID()}`,
+    const statusList: StatusListData = {
+      id: `urn:${randomUUID()}`,
       statusPurpose: 'revocation',
       bitstring: bitstringBuffer,
       bitLength: this.statusListCredentialMax,
       byteLength,
     };
-    return newStatusList;
+    return statusList;
   }
 
   async verifyStatus(
-    listId: string,
     index: number,
-    correlationId: string,
-  ): Promise<any> {
-    // 1.データを取得する
-    const {
-      credential,
-      error,
-      status,
-    }: { credential?: any; status: boolean; error?: string } =
-      await this.fetch(listId);
-    if (!status) {
-      this.logger.error(`${error}`);
-      return { ...this.responseDao, status: 'unknown' };
-    }
-    // 2. 作成者の署名検証
-    const isValid = await verifyStatusListSignature(
-      credential,
-      this.documentLoader,
-    );
-
-    //3．作られたデータがおかしい場合は、例外をスローする
-    const statusListData = createStatusListDatafromVc(credential, 1000);
-    if (index < 0 || index >= statusListData.bitLength) {
-      this.logger.error(
-        `index ${index} is out of bounds for bitlength ${statusListData.bitLength}`,
+    credential: StatusListVerifableCredential,
+  ): Promise<{ status: string; statusCode: number }> {
+    const errors: VerificationErrorDetails[] = [];
+    try {
+      // 作られたデータがおかしい場合は、例外をスローする
+      const statusListData = transferStatusListDatafromVc(credential, 1000);
+      if (index < 0 || index >= statusListData.bitLength) {
+        this.logger.error(
+          `index ${index} is out of bounds for bitlength ${statusListData.bitLength}`,
+        );
+        errors.push({
+          status: ERROR_MESSAGES.UNKNOWN,
+          message:
+            'index ${index} is out of bounds for bitlength ${statusListData.bitLength}',
+        });
+        throw new HttpException(
+          { code: CODE_MESSAGES.VC_VERIFICATIN_FIELD, errors },
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
+      }
+      // ビット列を確認する。
+      const byte = searchBit(statusListData.bitstring, index);
+      if (byte !== 0 && byte !== 1) {
+        this.logger.error(`invalid status value: ${byte}. Must be 0 or 1.`);
+        errors.push({
+          status: ERROR_MESSAGES.UNKNOWN,
+          message: 'invalid status value: ${byte}. Must be 0 or 1.',
+        });
+        throw new HttpException(
+          { code: CODE_MESSAGES.VC_VERIFICATIN_FIELD, errors },
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
+      }
+      if (errors.length) {
+        throw new HttpException(
+          { code: CODE_MESSAGES.VC_VERIFICATIN_FIELD, errors },
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
+      }
+      return {
+        status: byte === 1 ? 'revoked' : 'valid',
+        statusCode: 200,
+      };
+    } catch (error) {
+      this.logger.error('Error in verifyStatus:', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        {
+          message: ERROR_MESSAGES.INTERNAL_ERROR,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
-      return { ...this.responseDao, status: 'unknown' };
     }
-    //1．ビット列を確認する。
-    const byte = searchBit(statusListData.bitstring, index);
-    if (byte !== 0 && byte !== 1) {
-      this.logger.error(`invalid status value: ${byte}. Must be 0 or 1.`);
-      return { ...this.responseDao, status: 'unknown' };
-    }
-    return { ...this.responseDao, status: byte === 1 ? 'revoked' : 'valid' };
   }
 
-  setStatus(
-    statusListData: StatusListData,
+  changeStatus(
     index: number,
     status: string,
-    correlationId: string,
-  ): void {
-    if (index < 0 || index >= statusListData.bitLength) {
-      throw new Error(
-        `index ${index} is out of bounds for bitlength ${statusListData.bitLength}`,
+    credential: StatusListVerifableCredential,
+  ): StatusListData {
+    const errors: RegistrationErrorDetails[] = [];
+    try {
+      const statusListData = transferStatusListDatafromVc(credential, 1000);
+      if (index < 0 || index >= statusListData.bitLength) {
+        errors.push({
+          message: `Status list update client error (revoke or valid): ${status}`,
+        });
+        throw new HttpException(errors, HttpStatus.BAD_REQUEST);
+      }
+      let revoked: number;
+      if (status === STATUS_CODE.REVOKE) {
+        revoked = 1;
+      } else if (status === STATUS_CODE.VALID) {
+        revoked = 0;
+      } else {
+        errors.push({
+          message: `Status list update client error (revoke or valid): ${status}`,
+        });
+        throw new HttpException(errors, HttpStatus.BAD_REQUEST);
+      }
+      const { byte, byteIndex } = replaceBit(
+        statusListData.bitstring,
+        index,
+        revoked,
+      );
+      statusListData.bitstring[byteIndex] = byte;
+      statusListData.lastUpdateAt = new Date();
+      return statusListData;
+    } catch (error) {
+      this.logger.error('Error in changeStatus:', error);
+      if (error instanceof HttpException) {
+        throw new HttpException(
+          {
+            code: 'STATUS_LIST_CHANGE_STATUS_FAILD',
+            message: 'Change status faild',
+            registrationErrors: error.getResponse(),
+          },
+          error.getStatus(),
+        );
+      }
+      throw new HttpException(
+        {
+          message: ERROR_MESSAGES.INTERNAL_ERROR,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-    let revoked: number;
-    if (status === 'revoked') {
-      revoked = 1;
-    } else if (status === 'valid') {
-      revoked = 0;
-    } else {
-      throw new BadRequestException({
-        message: `Status list update client error (revoke or valid): ${status}`,
-        correlationId,
-      });
-    }
-    const { byte, byteIndex } = replaceBit(
-      statusListData.bitstring,
-      index,
-      revoked,
-    );
-    statusListData.bitstring[byteIndex] = byte;
-    statusListData.lastUpdateAt = new Date();
   }
 
-  async generateStatusListData(
+  async issue(
     statusListData: StatusListData,
-    newCorrelationId: string,
-  ): Promise<any> {
-    const signedVC = await createSignedStatusListCredential(
-      statusListData,
-      this.issuerDid,
-    );
-    return JSON.stringify(signedVC);
-  }
-
-  private async fetch(listId: string): Promise<any> {
-    const cid = this.registryMap.get(listId);
-    if (!cid) {
-      return { status: false };
-    }
+  ): Promise<StatusListVerifableCredential> {
     try {
-      const credential = await this.ipfsAccessor.fetchJsonFromIpfs(cid);
-      return { status: true, credential };
+      const signedVC = await signedCredential(
+        statusListData,
+        this.issuerDid,
+        this.documentLoader,
+      );
+      return signedVC;
     } catch (error) {
-      return { status: false, error: error.message };
+      this.logger.error('Error in changeStatus:', error);
+      throw new HttpException(
+        {
+          message: ERROR_MESSAGES.INTERNAL_ERROR,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }
