@@ -112,7 +112,7 @@ export class StatusListController {
     const { fetchedCid } = await this.statusListService.registration(
       listId,
       signedCredential,
-      true
+      true,
     );
 
     const endTime = process.hrtime(request.startTime);

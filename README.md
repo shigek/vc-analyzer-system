@@ -100,3 +100,9 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
  at safeEventHandler (C:\Users\shige\analyzer\analyzer\node_modules\jsonld\lib\events.js:135:11)
 
 C:\Users\shige\analyzer\analyzer\node_modules\jsonld-signatures\lib\documentLoader.js:48:20
+
+
+cat private-key.pem | sed -e :loop -e 'N; $!b loop' -e 's/\n/\\n/g'
+
+openssl rsa -in private-key.pem -pubout -out public-key.pem
+openssl genrsa -out private-key.pem 2048

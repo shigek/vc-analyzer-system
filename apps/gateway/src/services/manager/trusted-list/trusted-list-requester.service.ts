@@ -4,25 +4,26 @@ import { ShareService } from '@share/share';
 import axios from 'axios';
 
 @Injectable()
-export class IssuersRequesterService {
-  private readonly statusListUrl: string;
+export class TrustedListsRequesterService {
+  private readonly trustedListUrl: string;
   constructor(
     private configService: ConfigService,
     private shareService: ShareService,
   ) {
-    const url = this.configService.get<string>('STATUS_LIST_URL');
+    const url = this.configService.get<string>('TRUSTED_LIST_URL');
     if (!url) {
-      throw new Error('STATUS_LIST_URL environment variable is not set.');
+      throw new Error('TRUSTED_LIST_URL environment variable is not set.');
     }
-    this.statusListUrl = url;
+    this.trustedListUrl = url;
   }
-  async createStatusList(createDao: any, correlationId: string): Promise<any> {
+  async addTrustedList(
+    createDao: any,
+    correlationId: string,
+  ): Promise<any> {
     try {
       const response = await axios.post(
-        `${this.statusListUrl}/status-lists/register`,
-        {
-          credentials: createDao.credentials,
-        },
+        `${this.trustedListUrl}/trusted-issuers`,
+        createDao,
         {
           headers: {
             'X-Correlation-ID': correlationId,
@@ -40,18 +41,15 @@ export class IssuersRequesterService {
       );
     }
   }
-  async updateStatus(
-    listId: string,
-    index: number,
-    updateDao: any,
+  async updateTrustedList(
+    subjectDid: string,
+    createDao: any,
     correlationId: string,
   ): Promise<any> {
     try {
       const response = await axios.put(
-        `${this.statusListUrl}/status-lists/${listId}/entries/${index}/status`,
-        {
-          status: updateDao.status,
-        },
+        `${this.trustedListUrl}/trasted-issuers/${subjectDid}`,
+        createDao,
         {
           headers: {
             'X-Correlation-ID': correlationId,
@@ -69,18 +67,20 @@ export class IssuersRequesterService {
       );
     }
   }
-  async createTrustedList(createDao: any, correlationId: string): Promise<any> {
+  async deleteTrustedList(
+    subjectDid: string,
+    createDao: any,
+    correlationId: string,
+  ): Promise<any> {
     try {
-      const response = await axios.post(
-        `${this.statusListUrl}/status-lists/register`,
-        {
-          credentials: createDao.credentials,
-        },
+      const response = await axios.delete(
+        `${this.trustedListUrl}/trasted-issuers/${subjectDid}`,
         {
           headers: {
             'X-Correlation-ID': correlationId,
             'Content-Type': 'application/json',
           },
+          data: createDao,
         },
       );
       return response.data;

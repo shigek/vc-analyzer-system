@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
 export async function readFile(path: string): Promise<any> {
-  const data = fs
+  const data = await fs
     .readFile(path, 'utf8')
     .then((data) => {
       return data;
@@ -9,5 +9,6 @@ export async function readFile(path: string): Promise<any> {
       console.error(`Error reading context file "${path}":`, err);
       throw err;
     });
-  return await data;
+  console.log(data);
+  return data;
 }

@@ -20,6 +20,8 @@ export class StatusListModule {
         req.startTime = process.hrtime();
         if (!req.header('X-Correlation-ID')) {
           req.correlationId = randomUUID();
+        } else {
+          req.correlationId = req.header('X-Correlation-ID');
         }
         storage.run(req, () => next());
       })

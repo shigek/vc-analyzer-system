@@ -96,7 +96,7 @@ export class StatusListService implements OnApplicationBootstrap {
   async registration(
     listId: string,
     signedCredential: StatusListVerifableCredential,
-    modify: boolean
+    modify: boolean,
   ): Promise<{ fetchedCid: string; status: string }> {
     const errors: RegistrationErrorDetails[] = [];
     try {

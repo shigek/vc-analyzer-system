@@ -1,0 +1,40 @@
+// 例: generate-test-jwt.js (簡単な Node.js スクリプトとして実行)
+
+import { signToken, verify } from "./jsonwebtoken";
+import path from 'path';
+
+// JWT に含めるペイロード（JwtStrategy の validate メソッドが期待する内容）
+// Client Credentials フローなので、クライアントを識別する情報を含めます。
+const testPayload = {
+  sub: 'vc-analyzer-management-client', // 例: クライアントID
+  clientId: 'vc-analyzer-management-client', // カスタムクレームとして含める場合
+  scopes: ['trusted-list:manage'] // 例: 権限情報を含める場合
+};
+
+// JWT の有効期限（アプリケーションの設定と合わせると良い）
+const jwtOptions = {
+  expiresIn: '60m',
+  algorithm: 'RS256'
+};
+
+
+const KEY_FILE_PATH = path.join(
+  __dirname,
+  '../',
+  '.certs',
+  'dmMtYW5hcnl6ZXItc3lzdGVtCg.key',
+);
+
+
+// JWT を生成
+(async () => {
+  try {
+    console.log('Generated Test JWT:');
+    const token = await signToken(testPayload, KEY_FILE_PATH, jwtOptions);
+    console.log(token);
+    await verify(token, KEY_FILE_PATH);
+    console.log('\nUse this token in the Authorization: Bearer <token> header.');
+  } catch (e) {
+    console.error("error", e);
+  }
+})();
