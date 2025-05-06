@@ -30,7 +30,6 @@ export class PrivateAnalyzerController {
     @Headers('X-Correlation-ID') correlationId: string,
     @Req() req: Request,
   ): Promise<any> {
-    console.log('Controller method entered after Guard');
     const newCorrelationId = correlationId ? correlationId : randomUUID();
     return this.statusListRequesterService.addStatusList(
       req.body,

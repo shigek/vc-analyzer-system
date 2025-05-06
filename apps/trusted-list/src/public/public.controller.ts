@@ -29,19 +29,31 @@ export class PublicController {
     this.serviceName = url2;
   }
 
-  @Get(':did')
+  @Get(':subjectDid')
   async hundleTrustedIssuers(
-    @Param('did') subjectDid: string,
+    @Param('subjectDid') subjectDid: string,
     @Res() res: Response,
   ): Promise<any> {
     const request = storage.getStore() as any;
-    const response: any =
-      await this.trustedListService.getTrustedListAndFilter(subjectDid);
+    //1.DIDのバリデート
+    this.trustedListService.validateDid(subjectDid);
+
+    //2.ファイル読み込む
+    const { credential, currentTrustedListCid } =
+      await this.trustedListService.readIpfsDataAndNotFoundError(subjectDid);
+
+    //3.署名検証と、subjectDidのチェック
+    await this.trustedListService.verifyProofAndId(subjectDid, credential);
+
+    //4.credentialSubjectの検証
+    const { validUntil, status } = await this.trustedListService.verifyCredentialSubject(credential);
+
     const endTime = process.hrtime(request.startTime);
     const processingTimeMillis = (endTime[0] * 1e9 + endTime[1]) / 1e6;
     const responsePayload = {
-      trustedIssuer: response.trustedIssuer,
-      status: response.status,
+      trustedIssuer: subjectDid,
+      status: status,
+      validUntil: validUntil,
     };
     const finalResponse: CommonResponse<typeof responsePayload> = {
       payload: responsePayload,
@@ -51,9 +63,9 @@ export class PublicController {
         timestamp: new Date().toISOString(),
         processingTimeMillis,
         ipfsGatewayUrl: this.ipfsPeerUrl,
-        fetchedCid: response.fetchedCid,
+        fetchedCid: currentTrustedListCid,
       },
     };
-    return res.status(response.statusCode).send(finalResponse);
+    return res.send(finalResponse);
   }
 }

@@ -15,11 +15,9 @@ import {
 } from '@share/share';
 import { IpfsAccessor } from '@share/share/utils/ipfs-data-accessor';
 import {
-  createSignedTrustedListCredential,
-  updateSignedTrustedListCredential,
+  signedCredential,
 } from '../utils/signed-trusted-list-vc';
 import { securityLoader } from '@digitalbazaar/security-document-loader';
-import { SubjectDidUpdateDto } from '../dto/subject-did-update';
 import { verifySignature } from '@share/share/utils/jsonld-verifier';
 import {
   TrustedIssuerEntry,
@@ -36,6 +34,7 @@ import {
   ResourceArgs,
   CODE_MESSAGES,
   RESOURCE_TYPE,
+  TRUSTED_CODE,
 } from '@share/share/common/message/error-message';
 
 @Injectable()
@@ -105,65 +104,222 @@ export class TrustedListService implements OnApplicationBootstrap {
     }
   }
 
-  async getTrustedListAndFilter(subjectDid: string): Promise<any> {
-    const errors: VerificationErrorDetails[] = [];
+  async registration(
+    subjectDid: string,
+    signedCredential: TrustedListVerifableCredential,
+    modify: boolean,
+  ): Promise<{ fetchedCid: string; }> {
+    const errors: RegistrationErrorDetails[] = [];
+    try {
+      // 1.登録済みの確認
+      const currentTrustedListCid = this.registryMap.get(subjectDid);
+      if (currentTrustedListCid && !modify) {
+        errors.push({
+          message: `Trusted issuer with DID ${subjectDid} already exists in registory.`,
+        });
+        throw new HttpException(errors, HttpStatus.BAD_REQUEST);
+      }
+      // 2.IPFSへデータを登録する。
+      const cid = await this.ipfsAccessor.addJsonToIpfs(signedCredential);
+
+      // 3.Registryに登録
+      this.registryMap.set(subjectDid, cid.toString());
+      await saveRegistry(this.registryMap, this.registryFilePath);
+      return { fetchedCid: cid.toString() };
+    } catch (error) {
+      this.logger.error('Error in registration:', error);
+      if (error instanceof HttpException) {
+        throw new HttpException(
+          {
+            code: 'TRUSTED_LIST_REGISTRATION',
+            message: 'registration faild',
+            registrationErrors: error.getResponse(),
+          },
+          error.getStatus(),
+        );
+      }
+      throw new HttpException(
+        {
+          message: ERROR_MESSAGES.INTERNAL_ERROR,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+  async readIpfsDataAndNotFoundError(subjectDid: string): Promise<{
+    credential: TrustedListVerifableCredential;
+    currentTrustedListCid: string;
+  }> {
+    const errors: RegistrationErrorDetails[] = [];
     const resurceArgs: ResourceArgs = {
       resourceType: RESOURCE_TYPE.TRUSTED_ISSUER,
       identifier: subjectDid,
     };
     try {
-      if (!validateDid(subjectDid)) {
-        errors.push({
-          status: ERROR_MESSAGES.INVALID_ISSUER_STATUS,
-          message: ERROR_MESSAGES.VALIDATION_DID_ERROR,
-        });
-        throw new HttpException(
-          { code: CODE_MESSAGES.VC_VERIFICATIN_FIELD, errors },
-          HttpStatus.UNPROCESSABLE_ENTITY,
-        );
-      }
       const currentTrustedListCid = this.registryMap.get(subjectDid);
       if (!currentTrustedListCid) {
         errors.push({
-          status: ERROR_MESSAGES.INVALID_ISSUER_STATUS,
           message: ERROR_MESSAGES.RESOURCE_NOT_FOUND(resurceArgs),
         });
-        throw new HttpException(
-          { code: CODE_MESSAGES.VC_VERIFICATIN_FIELD, errors },
-          HttpStatus.UNPROCESSABLE_ENTITY,
-        );
+        throw new HttpException(errors, HttpStatus.BAD_REQUEST);
       }
-      const trustedListData = (await this.ipfsAccessor.fetchJsonFromIpfs(
+      const credential = (await this.ipfsAccessor.fetchJsonFromIpfs(
         currentTrustedListCid!,
       )) as TrustedListVerifableCredential;
+      return { credential, currentTrustedListCid };
+    } catch (error) {
+      this.logger.error('Error in readIpfsDataAndNotFoundError:', error);
+      if (error instanceof HttpException) {
+        throw new HttpException(
+          {
+            code: 'STATUS_LIST_IPFS_READ_FAILD',
+            message: 'not found faild',
+            registrationErrors: error.getResponse(),
+          },
+          error.getStatus(),
+        );
+      }
+      throw new HttpException(
+        {
+          message: ERROR_MESSAGES.INTERNAL_ERROR,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+  async readIpfsDataAndAlredyError(
+    listId: string,
+  ): Promise<TrustedListVerifableCredential> {
+    const errors: RegistrationErrorDetails[] = [];
+    try {
+      const currentTrustedListCid = this.registryMap.get(listId);
+      if (currentTrustedListCid) {
+        errors.push({
+          message: `Status list with List ID ${listId} already exists in registory.`,
+        });
+        throw new HttpException(errors, HttpStatus.BAD_REQUEST);
+      }
+      const credential = (await this.ipfsAccessor.fetchJsonFromIpfs(
+        currentTrustedListCid!,
+      )) as TrustedListVerifableCredential;
+      return credential;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw new HttpException(
+          {
+            code: 'STATUS_LIST_IPFS_READ_FAILD',
+            message: 'already exists faild',
+            registrationErrors: error.getResponse(),
+          },
+          error.getStatus(),
+        );
+      }
+      this.logger.error('Error in readIpfsDataAndAlredyError:', error);
+      throw new HttpException(
+        {
+          message: ERROR_MESSAGES.INTERNAL_ERROR,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async verifyProofAndId(
+    subjectDid: string,
+    credential: TrustedListVerifableCredential,
+  ): Promise<boolean> {
+    const errors: VerificationErrorDetails[] = [];
+    try {
       const isValidSignature = await verifySignature(
-        trustedListData,
+        credential,
         this.documentLoader,
       );
       if (!isValidSignature) {
         errors.push({
-          status: ERROR_MESSAGES.INVALID_ISSUER_STATUS,
-          message: 'Invalid trusted issuer signature.',
+          status: ERROR_MESSAGES.UNKNOWN,
+          message: 'Invalid status list signature.',
         });
+        throw new HttpException(
+          { code: CODE_MESSAGES.VC_VERIFICATIN_FIELD, errors },
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
       }
-      if (subjectDid !== trustedListData?.credentialSubject.id) {
+      if (subjectDid !== credential?.credentialSubject.id) {
         errors.push({
-          status: ERROR_MESSAGES.INVALID_ISSUER_STATUS,
-          message: 'The subject DID does not match.',
+          status: ERROR_MESSAGES.UNKNOWN,
+          message: `List id does not match: Req(${subjectDid}) Res(${credential?.credentialSubject.id})`,
         });
+        throw new HttpException(
+          { code: CODE_MESSAGES.VC_VERIFICATIN_FIELD, errors },
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
       }
+      return true;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error('Error in verifyProofAndId:', error);
+      throw new HttpException(
+        {
+          message: ERROR_MESSAGES.INTERNAL_ERROR,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  validateDid(subjectDid: string): boolean {
+    const errors: RegistrationErrorDetails[] = [];
+    try {
+      if (!validateDid(subjectDid)) {
+        errors.push({
+          message: ERROR_MESSAGES.VALIDATION_DID_ERROR,
+        });
+        throw new HttpException(errors, HttpStatus.BAD_REQUEST);
+      }
+      return true;
+    } catch (error) {
+      this.logger.error('Error in validateDid:', error);
+      if (error instanceof HttpException) {
+        throw new HttpException(
+          {
+            code: 'TRUSTED_LIST_SUBJECT_DID_VALIDATION_FAILD',
+            message: 'subjectDid validation faild',
+            registrationErrors: error.getResponse(),
+          },
+          error.getStatus(),
+        );
+      }
+      throw new HttpException(
+        {
+          message: ERROR_MESSAGES.INTERNAL_ERROR,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async verifyCredentialSubject(
+    credential: TrustedListVerifableCredential,
+  ): Promise<{
+    validUntil: string,
+    status: string,
+  }> {
+    const errors: VerificationErrorDetails[] = [];
+    try {
       const entry: TrustedIssuerEntry =
-        trustedListData.credentialSubject?.trustedIssuerEntry;
+        credential.credentialSubject?.trustedIssuerEntry;
       if (!entry) {
         errors.push({
-          status: ERROR_MESSAGES.INVALID_ISSUER_STATUS,
+          status: TRUSTED_CODE.NOT_TRUSTED,
           message: 'trustedIssuerEntry is not found.',
         });
       }
       if (!entry.validUntil || typeof entry.validUntil !== 'string') {
         this.logger.warn(`Entry missing or invalid validUntil:`, entry);
         errors.push({
-          status: ERROR_MESSAGES.INVALID_ISSUER_STATUS,
+          status: TRUSTED_CODE.NOT_TRUSTED,
           message: 'Entry missing or invalid validUntil: ${entry}',
         });
       }
@@ -175,14 +331,14 @@ export class TrustedListService implements OnApplicationBootstrap {
             entry,
           );
           errors.push({
-            status: ERROR_MESSAGES.INVALID_ISSUER_STATUS,
+            status: TRUSTED_CODE.NOT_TRUSTED,
             message: `Entry has unparsable validUntil date string: ${entry.validUntil}`,
           });
         }
         const isFuture = isAfterDay(validUntilDate);
         if (!isFuture) {
           errors.push({
-            status: ERROR_MESSAGES.INVALID_ISSUER_STATUS,
+            status: TRUSTED_CODE.NOT_TRUSTED,
             message: `Validity period has expired: ${entry.validUntil}`,
           });
         }
@@ -193,7 +349,7 @@ export class TrustedListService implements OnApplicationBootstrap {
           entry,
         );
         errors.push({
-          status: ERROR_MESSAGES.INVALID_ISSUER_STATUS,
+          status: TRUSTED_CODE.NOT_TRUSTED,
           message: `Error parsing validUntil date string: ${entry.validUntil}`,
         });
       }
@@ -204,19 +360,14 @@ export class TrustedListService implements OnApplicationBootstrap {
         );
       }
       return {
-        trustedIssuer: {
-          trustedIssuerDid: trustedListData?.credentialSubject.id,
-          validUntil: entry.validUntil,
-        },
-        status: ERROR_MESSAGES.VALID_ISSUER_STATUS,
-        statusCode: 200,
-        fetchedCid: currentTrustedListCid,
+        validUntil: entry.validUntil,
+        status: TRUSTED_CODE.TRUSTED,
       };
     } catch (error) {
-      this.logger.error('Error in getTrustedListAndFilter:', error);
       if (error instanceof HttpException) {
         throw error;
       }
+      this.logger.error('Error in verifyCredentialSubject:', error);
       throw new HttpException(
         {
           message: ERROR_MESSAGES.INTERNAL_ERROR,
@@ -225,194 +376,73 @@ export class TrustedListService implements OnApplicationBootstrap {
       );
     }
   }
-
-  async registrationTrustedList(subjectDid: string): Promise<any> {
-    const errors: RegistrationErrorDetails[] = [];
+  async issue(subjectDid: string): Promise<TrustedListVerifableCredential> {
     try {
-      if (!validateDid(subjectDid)) {
-        errors.push({
-          message: `Invalid subject DID format in URL.`,
-        });
-        throw new HttpException(errors, HttpStatus.BAD_REQUEST);
-      }
-      const currentTrustedListCid = this.registryMap.get(subjectDid);
-      if (currentTrustedListCid) {
-        errors.push({
-          message: `Trusted issuer with DID ${subjectDid} already exists in registory.`,
-        });
-        throw new HttpException(errors, HttpStatus.BAD_REQUEST);
-      }
-      const trustedListData = await createSignedTrustedListCredential(
+      const signedVC = await signedCredential(
         this.trustedServiceProviderDid,
         subjectDid,
         this.registrationLicenseExpiration,
         this.documentLoader,
       );
-      const cid = await this.ipfsAccessor.addJsonToIpfs(trustedListData);
-      this.registryMap.set(subjectDid, cid.toString());
-      await saveRegistry(this.registryMap, this.registryFilePath);
-      return {
-        trustedIssuer: {
-          trustedIssuerDid: trustedListData?.credentialSubject.id,
-          validUntil:
-            trustedListData.credentialSubject?.trustedIssuerEntry.validUntil,
-        },
-        statusCode: 201,
-        fetchedCid: cid.toString(),
-      };
+      return signedVC;
     } catch (error) {
-      if (error instanceof HttpException) {
-        throw new HttpException(
-          {
-            code: 'TRUSTED_LIST_REGISTRATION_FAILD',
-            message: 'Trasted issuer data registration faild',
-            registrationErrors: error.getResponse(),
-          },
-          error.getStatus(),
-        );
-      }
-      this.logger.error('Error in registrationTrustedList:', error);
+      this.logger.error('Error in changeStatus:', error);
       throw new HttpException(
         {
-          message: `An unexpected error occurred. prease contact support.`,
+          message: ERROR_MESSAGES.INTERNAL_ERROR,
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
-  async updateTrustedList(
-    subjectDid: string,
-    subjectDidUpdateDto: SubjectDidUpdateDto,
-  ): Promise<any> {
+  validateValidUnit(validUntil?: string): boolean {
     const errors: RegistrationErrorDetails[] = [];
-    try {
-      if (subjectDidUpdateDto.validUntil) {
-        try {
-          const validUntilDate = new Date(subjectDidUpdateDto.validUntil);
-          if (isNaN(validUntilDate.getTime())) {
-            this.logger.warn(
-              `Unparsable validUnit date string in requst body: ${subjectDidUpdateDto.validUntil}`,
-              subjectDidUpdateDto,
-            );
-            errors.push({
-              message: `Unparsable validUnit date string in requst body.`,
-            });
-            throw new HttpException(errors, HttpStatus.BAD_REQUEST);
-          }
-        } catch (parseError) {
-          console.error(
-            `Unparsable validUnit date string in requst body: ${subjectDidUpdateDto.validUntil}`,
-            parseError,
-            subjectDidUpdateDto,
+    if (!validUntil) {
+      return true;
+    } else {
+      try {
+        const validUntilDate = new Date(validUntil);
+        if (isNaN(validUntilDate.getTime())) {
+          this.logger.warn(
+            `Unparsable validUnit date string in requst body: ${validUntil}`
           );
           errors.push({
             message: `Unparsable validUnit date string in requst body.`,
           });
           throw new HttpException(errors, HttpStatus.BAD_REQUEST);
         }
-      }
-      if (!validateDid(subjectDid)) {
-        errors.push({
-          message: `Invalid subject DID format in URL.`,
-        });
-        throw new HttpException(errors, HttpStatus.BAD_REQUEST);
-      }
-      let currentTrustedListCid = this.registryMap.get(subjectDid);
-      if (!currentTrustedListCid) {
-        errors.push({
-          message: `Trusted issuer with DID ${subjectDid} not found in registory`,
-        });
-        throw new HttpException(errors, HttpStatus.BAD_REQUEST);
-      }
-      const trustedListData = (await this.ipfsAccessor.fetchJsonFromIpfs(
-        currentTrustedListCid,
-      )) as TrustedListVerifableCredential;
-      const isValidSignature = await verifySignature(
-        trustedListData,
-        this.documentLoader,
-      );
-      if (!isValidSignature) {
-        errors.push({
-          message: 'Invalid current trusted issuer data signature.',
-        });
-        throw new HttpException(errors, HttpStatus.BAD_REQUEST);
-      }
-      const updateTrustedListData = await updateSignedTrustedListCredential(
-        this.trustedServiceProviderDid,
-        subjectDid,
-        subjectDidUpdateDto,
-        trustedListData,
-        this.documentLoader,
-      );
-      const cid = await this.ipfsAccessor.addJsonToIpfs(updateTrustedListData);
-      this.registryMap.set(subjectDid, cid.toString());
-      await saveRegistry(this.registryMap, this.registryFilePath);
-      return {
-        trustedIssuer: {
-          trustedIssuerDid: trustedListData?.credentialSubject.id,
-          validUntil:
-            trustedListData.credentialSubject?.trustedIssuerEntry.validUntil,
-        },
-        statusCode: 200,
-        fetchedCid: cid.toString(),
-      };
-    } catch (error) {
-      if (error instanceof HttpException) {
+        return true;
+      } catch (parseError) {
+        if (parseError instanceof HttpException) {
+          this.logger.error('Error in validateValidUnit:', parseError);
+          throw new HttpException(
+            {
+              code: 'TRASTED_LIST_VALIDUNTIL_VALIDATE_FAILD',
+              message: 'Trasted issuer validUntil validatefaild',
+              registrationErrors: parseError.getResponse(),
+            },
+            parseError.getStatus(),
+          );
+        }
         throw new HttpException(
           {
-            code: 'TRASTED_LIST_UPDATE_FAILD',
-            message: 'Trasted issuer data update faild',
-            registrationErrors: error.getResponse(),
+            code: 'TRASTED_LIST_VALIDUNTIL_VALIDATE_FAILD',
+            message: 'Trasted issuer validUntil validatefaild',
+            registrationErrors: parseError.getResponse(),
           },
-          error.getStatus(),
+          HttpStatus.BAD_REQUEST,
         );
       }
-      this.logger.error('Error in updateTrustedList:', error);
-      throw new HttpException(
-        {
-          message: ERROR_MESSAGES.INTERNAL_ERROR,
-        },
-        HttpStatus.BAD_REQUEST,
-      );
     }
   }
-  async deleteTrustedList(subjectDid: string): Promise<any> {
-    const errors: RegistrationErrorDetails[] = [];
+  async deleteRegistry(subjectDid: string): Promise<any> {
     try {
-      if (!validateDid(subjectDid)) {
-        errors.push({
-          message: `Invalid subject DID format in URL.`,
-        });
-        throw new HttpException(errors, HttpStatus.BAD_REQUEST);
-      }
-      const currentTrustedListCid = this.registryMap.get(subjectDid);
-      if (!currentTrustedListCid) {
-        errors.push({
-          message: `Trusted issuer with DID ${subjectDid}　data not found in registry`,
-        });
-        throw new HttpException(errors, HttpStatus.BAD_REQUEST);
-      }
       // レジストリの更新と書き込み
       this.registryMap.delete(subjectDid);
       await saveRegistry(this.registryMap, this.registryFilePath);
-      return {
-        trustedIssuer: {
-          trustedIssuerDid: subjectDid,
-        },
-        statusCode: 200,
-      };
+      return { subjectDid };
     } catch (error) {
-      if (error instanceof HttpException) {
-        throw new HttpException(
-          {
-            code: 'TRASTED_LIST_DELETE_FAILD',
-            message: 'Trasted issuer data delete faild',
-            registrationErrors: error.getResponse(),
-          },
-          error.getStatus(),
-        );
-      }
-      this.logger.error('Error in deleteTrustedList:', error);
+      this.logger.error('Error in deleteRegistry:', error);
       throw new HttpException(
         {
           message: ERROR_MESSAGES.INTERNAL_ERROR,

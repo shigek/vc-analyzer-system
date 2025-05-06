@@ -7,7 +7,7 @@ import {
   TrustedListVerifableCredential,
 } from '../interfaces/trusted-vc-data.interface';
 
-export async function createSignedTrustedListCredential(
+export async function signedCredential(
   issuerDid: string,
   subjectDid: string,
   years: number,
@@ -32,34 +32,6 @@ export async function createSignedTrustedListCredential(
       },
     },
   };
-  const signedCredential: TrustedListVerifableCredential = await issue(
-    issuerDid,
-    credential,
-    documentLoader,
-  );
-  return signedCredential;
-}
-export async function updateSignedTrustedListCredential(
-  issuerDid: string,
-  subjectDid: string,
-  updateData: SubjectDidUpdateDto,
-  credential: TrustedListVerifableCredential,
-  documentLoader: any,
-): Promise<TrustedListVerifableCredential> {
-  // 1 credentialから、credentialSubjectを取り出す。
-  const credentialSubject = credential.credentialSubject as CredentialSubject;
-  // 2. データのバリデーション
-
-  // 3. カレントの情報を更新します。
-  if (updateData.validUntil) {
-    credentialSubject.trustedIssuerEntry.validUntil = updateData.validUntil;
-  }
-  if (updateData.policy) {
-    credentialSubject.trustedIssuerEntry.policy = updateData.policy;
-  }
-  credential.credentialSubject.trustedIssuerEntry =
-    credentialSubject.trustedIssuerEntry;
-  delete credential.proof; // proofは新規になるのでいったん削除
   const signedCredential: TrustedListVerifableCredential = await issue(
     issuerDid,
     credential,

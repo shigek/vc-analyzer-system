@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ShareService } from '@share/share';
+import { getAxionResponse } from '@share/share/common/axios/error-handler.axios';
+import { ERROR_MESSAGES } from '@share/share/common/message/error-message';
 import axios from 'axios';
 
 @Injectable()
@@ -8,9 +9,9 @@ export class VerifiersRequesterService {
   private readonly didResolverUrl: string;
   private readonly statusListUrl: string;
   private readonly trustedListUrl: string;
+  private readonly logger = new Logger(VerifiersRequesterService.name);
   constructor(
     private configService: ConfigService,
-    private shareService: ShareService,
   ) {
     const url0 = this.configService.get<string>('DID_RESOLVER_URL');
     if (!url0) {
@@ -43,11 +44,12 @@ export class VerifiersRequesterService {
       );
       return response.data;
     } catch (error) {
-      throw this.shareService.errorResponse(
+      this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD);
+      throw getAxionResponse(
         error,
         'DID Resolver',
+        [did],
         correlationId,
-        [did, ''],
       );
     }
   }
@@ -68,11 +70,12 @@ export class VerifiersRequesterService {
       );
       return response.data;
     } catch (error) {
-      throw this.shareService.errorResponse(
+      this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD);
+      throw getAxionResponse(
         error,
         'Status List',
-        correlationId,
         [listId, `${index}`],
+        correlationId,
       );
     }
   }
@@ -89,11 +92,12 @@ export class VerifiersRequesterService {
       );
       return response.data;
     } catch (error) {
-      throw this.shareService.errorResponse(
+      this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD);
+      throw getAxionResponse(
         error,
         'Trusted List',
+        [did],
         correlationId,
-        [did, ``],
       );
     }
   }

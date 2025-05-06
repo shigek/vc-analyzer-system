@@ -9,25 +9,20 @@ export class PublicAnalyzerController {
   private readonly logger = new Logger(PublicAnalyzerController.name);
   constructor(
     private readonly verifiersRequesterService: VerifiersRequesterService,
-  ) {}
+  ) { }
   @Get('resolve/:did')
   async hundleGetDidDocument(
     @Headers('X-Correlation-ID') correlationId: string,
     @Param('did') did: string,
     @Res() res: Response,
   ): Promise<any> {
-    try {
-      const newCorrelationId = correlationId ? correlationId : randomUUID();
-      res.setHeader('X-Correlation-ID', newCorrelationId);
-      res.send(
-        await this.verifiersRequesterService.getDidDocument(
-          did,
-          newCorrelationId,
-        ),
-      );
-    } catch (error) {
-      throw error;
-    }
+    const newCorrelationId = correlationId ? correlationId : randomUUID();
+    res.send(
+      await this.verifiersRequesterService.getDidDocument(
+        did,
+        newCorrelationId,
+      ),
+    );
   }
 
   @Get('status-checks/:listId/:index')

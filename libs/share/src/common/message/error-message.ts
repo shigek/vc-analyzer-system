@@ -17,6 +17,12 @@ export const STATUS_CODE = {
   UNKNOWN: 'unknown',
 };
 
+export const TRUSTED_CODE = {
+  TRUSTED: 'trusted',
+  NOT_TRUSTED: 'not-trusted',
+  UNKNOWN: 'unknown',
+};
+
 // エラーメッセージを管理するオブジェクト（値を引数にとる関数を含む）
 export const CODE_MESSAGES = {
   VC_VERIFICATIN_FIELD: 'VC_VERIFICATION_FAILED',
@@ -57,6 +63,8 @@ export const ERROR_MESSAGES = {
   VALIDATION_ERROR: 'Input validation failed.',
   INTERNAL_ERROR: 'An internal server error occurred. prease contact support.',
 
+  // 外部APIコールで発生したエラー
+  EXTERNAL_API_CALL_FAILD: 'Integration with the external API has failed.'
   // ... 他のメッセージ ...
 };
 

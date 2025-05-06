@@ -1,14 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ShareService } from '@share/share';
+import { getAxionResponse } from '@share/share/common/axios/error-handler.axios';
+import { ERROR_MESSAGES } from '@share/share/common/message/error-message';
 import axios from 'axios';
 
 @Injectable()
 export class TrustedListsRequesterService {
   private readonly trustedListUrl: string;
+  private readonly logger = new Logger(TrustedListsRequesterService.name);
   constructor(
     private configService: ConfigService,
-    private shareService: ShareService,
   ) {
     const url = this.configService.get<string>('TRUSTED_LIST_URL');
     if (!url) {
@@ -16,10 +17,7 @@ export class TrustedListsRequesterService {
     }
     this.trustedListUrl = url;
   }
-  async addTrustedList(
-    createDao: any,
-    correlationId: string,
-  ): Promise<any> {
+  async addTrustedList(createDao: any, correlationId: string): Promise<any> {
     try {
       const response = await axios.post(
         `${this.trustedListUrl}/trusted-issuers`,
@@ -33,11 +31,12 @@ export class TrustedListsRequesterService {
       );
       return response.data;
     } catch (error) {
-      throw this.shareService.errorResponse(
+      this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD);
+      throw getAxionResponse(
         error,
         'Status List',
+        [],
         correlationId,
-        [``, ``],
       );
     }
   }
@@ -59,11 +58,12 @@ export class TrustedListsRequesterService {
       );
       return response.data;
     } catch (error) {
-      throw this.shareService.errorResponse(
+      this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD);
+      throw getAxionResponse(
         error,
         'Status List',
+        [subjectDid],
         correlationId,
-        [``, ``],
       );
     }
   }
@@ -85,11 +85,12 @@ export class TrustedListsRequesterService {
       );
       return response.data;
     } catch (error) {
-      throw this.shareService.errorResponse(
+      this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD);
+      throw getAxionResponse(
         error,
         'Status List',
+        [subjectDid],
         correlationId,
-        [``, ``],
       );
     }
   }

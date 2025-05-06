@@ -104,7 +104,7 @@ export class StatusListService implements OnApplicationBootstrap {
       const currentStatusListCid = this.registryMap.get(listId);
       if (currentStatusListCid && !modify) {
         errors.push({
-          message: `Trusted issuer with DID ${listId} already exists in registory.`,
+          message: `Status list with LIST ID ${listId} already exists in registory.`,
         });
         throw new HttpException(errors, HttpStatus.BAD_REQUEST);
       }
@@ -151,20 +151,24 @@ export class StatusListService implements OnApplicationBootstrap {
         errors.push({
           message: ERROR_MESSAGES.RESOURCE_NOT_FOUND(resurceArgs),
         });
-        throw new HttpException(
-          { code: CODE_MESSAGES.VC_VERIFICATIN_FIELD, errors },
-          HttpStatus.BAD_REQUEST,
-        );
+        throw new HttpException(errors, HttpStatus.BAD_REQUEST);
       }
       const credential = (await this.ipfsAccessor.fetchJsonFromIpfs(
         currentStatusListCid!,
       )) as StatusListVerifableCredential;
       return { credential, currentStatusListCid };
     } catch (error) {
+      this.logger.error('Error in readIpfsDataAndNotFoundError:', error);
       if (error instanceof HttpException) {
-        throw error;
+        throw new HttpException(
+          {
+            code: 'STATUS_LIST_IPFS_READ_FAILD',
+            message: 'not found faild',
+            registrationErrors: error.getResponse(),
+          },
+          error.getStatus(),
+        );
       }
-      this.logger.error('Error in readIpfsData:', error);
       throw new HttpException(
         {
           message: ERROR_MESSAGES.INTERNAL_ERROR,
@@ -190,6 +194,7 @@ export class StatusListService implements OnApplicationBootstrap {
       )) as StatusListVerifableCredential;
       return credential;
     } catch (error) {
+      this.logger.error('Error in readIpfsDataAndAlredyError:', error);
       if (error instanceof HttpException) {
         throw new HttpException(
           {
@@ -200,7 +205,6 @@ export class StatusListService implements OnApplicationBootstrap {
           error.getStatus(),
         );
       }
-      this.logger.error('Error in readIpfsData:', error);
       throw new HttpException(
         {
           message: ERROR_MESSAGES.INTERNAL_ERROR,

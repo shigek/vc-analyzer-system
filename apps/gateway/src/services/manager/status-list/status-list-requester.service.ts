@@ -1,14 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ShareService } from '@share/share';
+import { getAxionResponse } from '@share/share/common/axios/error-handler.axios';
+import { ERROR_MESSAGES } from '@share/share/common/message/error-message';
 import axios from 'axios';
 
 @Injectable()
 export class StatusListsRequesterService {
   private readonly statusListUrl: string;
+  private readonly logger = new Logger(StatusListsRequesterService.name);
   constructor(
     private configService: ConfigService,
-    private shareService: ShareService,
   ) {
     const url = this.configService.get<string>('STATUS_LIST_URL');
     if (!url) {
@@ -30,11 +31,12 @@ export class StatusListsRequesterService {
       );
       return response.data;
     } catch (error) {
-      throw this.shareService.errorResponse(
+      this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD);
+      throw getAxionResponse(
         error,
         'Status List',
+        ['register'],
         correlationId,
-        [``, ``],
       );
     }
   }
@@ -57,11 +59,12 @@ export class StatusListsRequesterService {
       );
       return response.data;
     } catch (error) {
-      throw this.shareService.errorResponse(
+      this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD);
+      throw getAxionResponse(
         error,
         'Status List',
+        [listId, 'entries', `${index}`, `status`],
         correlationId,
-        [``, ``],
       );
     }
   }
