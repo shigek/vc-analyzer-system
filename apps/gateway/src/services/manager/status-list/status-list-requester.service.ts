@@ -8,9 +8,7 @@ import axios from 'axios';
 export class StatusListsRequesterService {
   private readonly statusListUrl: string;
   private readonly logger = new Logger(StatusListsRequesterService.name);
-  constructor(
-    private configService: ConfigService,
-  ) {
+  constructor(private configService: ConfigService) {
     const url = this.configService.get<string>('STATUS_LIST_URL');
     if (!url) {
       throw new Error('STATUS_LIST_URL environment variable is not set.');
@@ -32,12 +30,7 @@ export class StatusListsRequesterService {
       return response.data;
     } catch (error) {
       this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD);
-      throw getAxionResponse(
-        error,
-        'Status List',
-        ['register'],
-        correlationId,
-      );
+      throw getAxionResponse(error, 'Status List', ['register'], correlationId);
     }
   }
   async updateStatusList(

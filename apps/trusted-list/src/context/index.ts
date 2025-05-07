@@ -7,6 +7,7 @@ const contexts = new Map();
 contexts.set(CONTEXT_URL, context);
 
 export {
+  context,
   constants,
   contexts,
   TRUSTED_LIST_CONTEXT_URL,

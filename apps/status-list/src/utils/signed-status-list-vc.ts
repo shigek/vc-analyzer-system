@@ -1,7 +1,9 @@
 import { Buffer } from 'buffer';
 import { StatusListVerifableCredential } from '../interfaces/status-list-data.interface';
+import { securityLoader } from '@digitalcredentials/security-document-loader';
 import { issue } from '@share/share/utils/jsonld-signer';
 import { randomUUID } from 'crypto';
+import { KeyFileDataLoader } from '@share/share/common/key/provider.key';
 export async function signedCredential(
   listData: {
     id: string;
@@ -10,6 +12,7 @@ export async function signedCredential(
     bitLength: number;
   },
   issuerDid: string,
+  keyfileLoader: KeyFileDataLoader,
   documentLoader: any,
 ): Promise<StatusListVerifableCredential> {
   const encodedListBitstring = listData.bitstring.toString('base64url');
@@ -30,9 +33,14 @@ export async function signedCredential(
     },
   };
   const signedCredential: StatusListVerifableCredential = await issue(
-    issuerDid,
+    keyfileLoader,
     credential,
     documentLoader,
   );
   return signedCredential;
+}
+
+export function setDocumentLoader(): any {
+  const loader = securityLoader({ fetchRemoteContexts: true });
+  return loader.build();
 }

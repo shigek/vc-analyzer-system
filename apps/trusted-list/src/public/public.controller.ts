@@ -35,18 +35,17 @@ export class PublicController {
     @Res() res: Response,
   ): Promise<any> {
     const request = storage.getStore() as any;
-    //1.DIDのバリデート
-    this.trustedListService.validateDid(subjectDid);
 
-    //2.ファイル読み込む
+    //1.ファイル読み込む
     const { credential, currentTrustedListCid } =
-      await this.trustedListService.readIpfsDataAndNotFoundError(subjectDid);
+      await this.trustedListService.readIpfsData(subjectDid);
 
     //3.署名検証と、subjectDidのチェック
     await this.trustedListService.verifyProofAndId(subjectDid, credential);
 
     //4.credentialSubjectの検証
-    const { validUntil, status } = await this.trustedListService.verifyCredentialSubject(credential);
+    const { validUntil, status } =
+      await this.trustedListService.verifyCredentialSubject(credential);
 
     const endTime = process.hrtime(request.startTime);
     const processingTimeMillis = (endTime[0] * 1e9 + endTime[1]) / 1e6;

@@ -51,8 +51,7 @@ export class StatusListController {
     const request = storage.getStore() as any;
     //1.ファイル読み込む
     const { credential, currentStatusListCid } =
-      await this.statusListService.readIpfsDataAndNotFoundError(listId);
-
+      await this.statusListService.readIpfsData(listId);
     //2 署名検証と、listIdのチェック
     await this.statusListService.verifyProofAndId(listId, credential);
 
@@ -92,9 +91,12 @@ export class StatusListController {
     @Body(new ValidationPipe()) updateDao: StatusListUpdateDto,
   ): Promise<any> {
     const request = storage.getStore() as any;
-    //1.ファイル読み込む
-    const { credential } =
-      await this.statusListService.readIpfsDataAndNotFoundError(listId);
+
+    //1.ファイルの存在チェック(存在しなかったら、例外をスロー)
+    this.statusListService.isExistsRegistryOrThrow(listId, false);
+
+    //2.ファイル読み込む
+    const { credential } = await this.statusListService.readIpfsData(listId);
 
     //2.署名検証と、listIdのチェック
     await this.statusListService.verifyProofAndId(listId, credential);

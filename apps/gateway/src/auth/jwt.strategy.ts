@@ -30,7 +30,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), // リクエストヘッダーからBearerトークンとしてJWTを抽出
       ignoreExpiration: true, // JWTの有効期限切れをチェックする（通常はtrue）
-      secretOrKey: fs.readFileSync(PUBLIC_KEY_FILE_PATH),
+      secretOrKey: fs.readFileSync(PUBLIC_KEY_FILE_PATH, 'utf8'),
       algorithms: ['RS256'],
     });
     this.logger.log('JwtStrategy constructor called');

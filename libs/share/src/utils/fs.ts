@@ -9,6 +9,5 @@ export async function readFile(path: string): Promise<any> {
       console.error(`Error reading context file "${path}":`, err);
       throw err;
     });
-  console.log(data);
   return data;
 }

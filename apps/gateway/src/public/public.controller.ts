@@ -9,7 +9,7 @@ export class PublicAnalyzerController {
   private readonly logger = new Logger(PublicAnalyzerController.name);
   constructor(
     private readonly verifiersRequesterService: VerifiersRequesterService,
-  ) { }
+  ) {}
   @Get('resolve/:did')
   async hundleGetDidDocument(
     @Headers('X-Correlation-ID') correlationId: string,

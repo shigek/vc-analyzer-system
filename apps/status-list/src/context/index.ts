@@ -9,6 +9,7 @@ contexts.set(CONTEXT_URL, context);
 export {
   constants,
   contexts,
+  context,
   TRUSTED_LIST_CONTEXT_URL,
   CONTEXT_URL,
   CONTEXT_URL_V1,

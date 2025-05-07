@@ -15,9 +15,10 @@ import {
 } from '@share/share';
 import { IpfsAccessor } from '@share/share/utils/ipfs-data-accessor';
 import {
-  signedCredential,
+  newCredentialSined,
+  setDocumentLoader,
+  updateCredentialSigned,
 } from '../utils/signed-trusted-list-vc';
-import { securityLoader } from '@digitalbazaar/security-document-loader';
 import { verifySignature } from '@share/share/utils/jsonld-verifier';
 import {
   TrustedIssuerEntry,
@@ -36,6 +37,10 @@ import {
   RESOURCE_TYPE,
   TRUSTED_CODE,
 } from '@share/share/common/message/error-message';
+import {
+  fileLoader,
+  KeyFileDataLoader,
+} from '@share/share/common/key/provider.key';
 
 @Injectable()
 export class TrustedListService implements OnApplicationBootstrap {
@@ -47,6 +52,7 @@ export class TrustedListService implements OnApplicationBootstrap {
   private readonly logger = new Logger(TrustedListService.name);
   private registryFilePath: string;
   private documentLoader: any;
+  private readonly keyFileLoader: KeyFileDataLoader;
 
   constructor(private configService: ConfigService) {
     const url2 = this.configService.get<string>('IPFS_PEER_URL');
@@ -77,17 +83,20 @@ export class TrustedListService implements OnApplicationBootstrap {
       );
     }
     this.registrationLicenseExpiration = parseInt(url4);
-    const url5 = this.configService.get<string>('TRUSTED_SERVICE_PROVIDER_DID');
+    const url5 = this.configService.get<string>(
+      'STATUSLIST_SERVICE_PROVIDER_KEY_DATA',
+    );
     if (!url5) {
       throw new Error(
-        ENVIRONMENT_MESSAGES.RESOURCE_NOT_FOUND('TRUSTED_SERVICE_PROVIDER_DID'),
+        ENVIRONMENT_MESSAGES.RESOURCE_NOT_FOUND(
+          'STATUSLIST_SERVICE_PROVIDER_KEY_DATA',
+        ),
       );
     }
-    this.trustedServiceProviderDid = url5;
-
-    const loader = securityLoader();
-    loader.addDocuments({ documents: [...trastedListContexts] });
-    this.documentLoader = loader.build();
+    const { loader, key } = fileLoader(url5);
+    this.trustedServiceProviderDid = key;
+    this.keyFileLoader = loader;
+    this.documentLoader = setDocumentLoader();
   }
 
   async onApplicationBootstrap() {
@@ -108,7 +117,7 @@ export class TrustedListService implements OnApplicationBootstrap {
     subjectDid: string,
     signedCredential: TrustedListVerifableCredential,
     modify: boolean,
-  ): Promise<{ fetchedCid: string; }> {
+  ): Promise<{ fetchedCid: string }> {
     const errors: RegistrationErrorDetails[] = [];
     try {
       // 1.登録済みの確認
@@ -146,7 +155,7 @@ export class TrustedListService implements OnApplicationBootstrap {
       );
     }
   }
-  async readIpfsDataAndNotFoundError(subjectDid: string): Promise<{
+  async readIpfsData(subjectDid: string): Promise<{
     credential: TrustedListVerifableCredential;
     currentTrustedListCid: string;
   }> {
@@ -168,7 +177,7 @@ export class TrustedListService implements OnApplicationBootstrap {
       )) as TrustedListVerifableCredential;
       return { credential, currentTrustedListCid };
     } catch (error) {
-      this.logger.error('Error in readIpfsDataAndNotFoundError:', error);
+      this.logger.error('Error in readIpfsData:', error);
       if (error instanceof HttpException) {
         throw new HttpException(
           {
@@ -187,22 +196,33 @@ export class TrustedListService implements OnApplicationBootstrap {
       );
     }
   }
-  async readIpfsDataAndAlredyError(
-    listId: string,
-  ): Promise<TrustedListVerifableCredential> {
+  isExistsRegistryOrThrow(subjectDid: string, exists: boolean): boolean {
     const errors: RegistrationErrorDetails[] = [];
+    const resurceArgs: ResourceArgs = {
+      resourceType: RESOURCE_TYPE.TRUSTED_ISSUER,
+      identifier: subjectDid,
+    };
     try {
-      const currentTrustedListCid = this.registryMap.get(listId);
-      if (currentTrustedListCid) {
-        errors.push({
-          message: `Status list with List ID ${listId} already exists in registory.`,
-        });
-        throw new HttpException(errors, HttpStatus.BAD_REQUEST);
+      const currentTrustedListCid = this.registryMap.get(subjectDid);
+      if (exists) {
+        if (currentTrustedListCid) {
+          errors.push({
+            message: `Status list with List ID ${subjectDid} already exists in registory.`,
+          });
+          throw new HttpException(errors, HttpStatus.BAD_REQUEST);
+        } else {
+          return true;
+        }
+      } else {
+        if (!currentTrustedListCid) {
+          errors.push({
+            message: ERROR_MESSAGES.RESOURCE_NOT_FOUND(resurceArgs),
+          });
+          throw new HttpException(errors, HttpStatus.BAD_REQUEST);
+        } else {
+          return true;
+        }
       }
-      const credential = (await this.ipfsAccessor.fetchJsonFromIpfs(
-        currentTrustedListCid!,
-      )) as TrustedListVerifableCredential;
-      return credential;
     } catch (error) {
       if (error instanceof HttpException) {
         throw new HttpException(
@@ -214,7 +234,7 @@ export class TrustedListService implements OnApplicationBootstrap {
           error.getStatus(),
         );
       }
-      this.logger.error('Error in readIpfsDataAndAlredyError:', error);
+      this.logger.error('Error in isExistsRegistryOrThrow:', error);
       throw new HttpException(
         {
           message: ERROR_MESSAGES.INTERNAL_ERROR,
@@ -303,8 +323,8 @@ export class TrustedListService implements OnApplicationBootstrap {
   async verifyCredentialSubject(
     credential: TrustedListVerifableCredential,
   ): Promise<{
-    validUntil: string,
-    status: string,
+    validUntil: string;
+    status: string;
   }> {
     const errors: VerificationErrorDetails[] = [];
     try {
@@ -376,15 +396,25 @@ export class TrustedListService implements OnApplicationBootstrap {
       );
     }
   }
-  async issue(subjectDid: string): Promise<TrustedListVerifableCredential> {
+  async issue(options: { subjectDid: string, credential?: TrustedListVerifableCredential }): Promise<TrustedListVerifableCredential> {
     try {
-      const signedVC = await signedCredential(
-        this.trustedServiceProviderDid,
-        subjectDid,
-        this.registrationLicenseExpiration,
-        this.documentLoader,
-      );
-      return signedVC;
+      if (options.credential) {
+        const signedVC = await updateCredentialSigned(
+          options.credential,
+          this.keyFileLoader,
+          this.documentLoader,
+        );
+        return signedVC;
+      } else {
+        const signedVC = await newCredentialSined(
+          this.trustedServiceProviderDid,
+          options.subjectDid,
+          this.registrationLicenseExpiration,
+          this.keyFileLoader,
+          this.documentLoader,
+        );
+        return signedVC;
+      }
     } catch (error) {
       this.logger.error('Error in changeStatus:', error);
       throw new HttpException(
@@ -404,7 +434,7 @@ export class TrustedListService implements OnApplicationBootstrap {
         const validUntilDate = new Date(validUntil);
         if (isNaN(validUntilDate.getTime())) {
           this.logger.warn(
-            `Unparsable validUnit date string in requst body: ${validUntil}`
+            `Unparsable validUnit date string in requst body: ${validUntil}`,
           );
           errors.push({
             message: `Unparsable validUnit date string in requst body.`,

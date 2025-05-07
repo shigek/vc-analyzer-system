@@ -10,9 +10,7 @@ export class VerifiersRequesterService {
   private readonly statusListUrl: string;
   private readonly trustedListUrl: string;
   private readonly logger = new Logger(VerifiersRequesterService.name);
-  constructor(
-    private configService: ConfigService,
-  ) {
+  constructor(private configService: ConfigService) {
     const url0 = this.configService.get<string>('DID_RESOLVER_URL');
     if (!url0) {
       throw new Error('DID_RESOLVER_URL environment variable is not set.');
@@ -45,12 +43,7 @@ export class VerifiersRequesterService {
       return response.data;
     } catch (error) {
       this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD);
-      throw getAxionResponse(
-        error,
-        'DID Resolver',
-        [did],
-        correlationId,
-      );
+      throw getAxionResponse(error, 'DID Resolver', [did], correlationId);
     }
   }
   async getStatus(
@@ -93,12 +86,7 @@ export class VerifiersRequesterService {
       return response.data;
     } catch (error) {
       this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD);
-      throw getAxionResponse(
-        error,
-        'Trusted List',
-        [did],
-        correlationId,
-      );
+      throw getAxionResponse(error, 'Trusted List', [did], correlationId);
     }
   }
 }

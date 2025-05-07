@@ -1,16 +1,16 @@
 import { issue } from '@share/share/utils/jsonld-signer';
 import { randomUUID } from 'crypto';
 import { addYear } from '@share/share';
-import { SubjectDidUpdateDto } from '../dto/subject-did-update';
-import {
-  CredentialSubject,
-  TrustedListVerifableCredential,
-} from '../interfaces/trusted-vc-data.interface';
+import { TrustedListVerifableCredential } from '../interfaces/trusted-vc-data.interface';
+import { securityLoader } from '@digitalcredentials/security-document-loader';
+import { constants, context } from 'apps/trusted-list/src/context';
+import { KeyFileDataLoader } from '@share/share/common/key/provider.key';
 
-export async function signedCredential(
+export async function newCredentialSined(
   issuerDid: string,
   subjectDid: string,
   years: number,
+  keyFileLoader: KeyFileDataLoader,
   documentLoader: any,
 ): Promise<TrustedListVerifableCredential> {
   const credential = {
@@ -33,9 +33,29 @@ export async function signedCredential(
     },
   };
   const signedCredential: TrustedListVerifableCredential = await issue(
-    issuerDid,
+    keyFileLoader,
     credential,
     documentLoader,
   );
   return signedCredential;
+}
+export async function updateCredentialSigned(
+  credential: TrustedListVerifableCredential,
+  keyFileLoader: KeyFileDataLoader,
+  documentLoader: any,
+): Promise<TrustedListVerifableCredential> {
+  const signedCredential: TrustedListVerifableCredential = await issue(
+    keyFileLoader,
+    credential,
+    documentLoader,
+  );
+  return signedCredential;
+}
+export function setDocumentLoader(): any {
+  // ＠＠＠動かない
+  // loader.setProtocolHandler({protocol: 'https', handler: jsonld.documentLoader});
+  const loader = securityLoader();
+  loader.addStatic(constants.CONTEXT_URL, context);
+  const documentLoader = loader.build();
+  return documentLoader;
 }

@@ -1,5 +1,5 @@
-import vc from '@digitalbazaar/vc';
-import { Ed25519Signature2020 } from '@digitalbazaar/ed25519-signature-2020';
+import vc from '@digitalcredentials/vc';
+import { Ed25519Signature2020 } from '@digitalcredentials/ed25519-signature-2020';
 export async function verifySignature(
   credential: any,
   documentLoader: any,

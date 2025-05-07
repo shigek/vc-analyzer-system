@@ -1,23 +1,29 @@
-import vc from '@digitalbazaar/vc';
-import { Ed25519Signature2020 } from '@digitalbazaar/ed25519-signature-2020';
-import { Ed25519VerificationKey2020 } from '@digitalbazaar/ed25519-verification-key-2020';
+import vc from '@digitalcredentials/vc';
+import { Ed25519Signature2020 } from '@digitalcredentials/ed25519-signature-2020';
+import { Ed25519VerificationKey2020 } from '@digitalcredentials/ed25519-verification-key-2020';
+import { KeyFileDataLoader } from '../common/key/provider.key';
 
 export async function issue(
-  issuerDid: string,
+  keyFileLoader: KeyFileDataLoader,
   credential: any,
   documentLoader: any,
 ): Promise<any> {
   try {
-    const publicKeyMultibase = issuerDid.split(':')[2];
-    const controller = issuerDid;
+    const keyData = keyFileLoader.get(credential.issuer);
+    if (!keyData) {
+      throw new Error(
+        'Error during Trusted List signature verification key not loaded',
+      );
+    }
+    const publicKeyMultibase = credential.issuer.split(':')[2];
+    const controller = credential.issuer;
     const keyPair = await Ed25519VerificationKey2020.from({
       type: 'Ed25519VerificationKey2020',
       controller,
       id: `${controller}#${publicKeyMultibase}`,
       publicKeyMultibase,
       // @@@　秘密鍵の取得方法は検討必要
-      privateKeyMultibase:
-        'zrv54LN7eKUsSX6qvYxp1AvQweEShTguFfWaLgKbqJPQLV3mum51UaLxz9mhT8SgwrTHQppJarF9f34zCmArqKjwtWQ',
+      privateKeyMultibase: keyData.private,
     });
     const suite = new Ed25519Signature2020({
       key: keyPair,

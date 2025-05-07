@@ -10,9 +10,11 @@ import {
   StatusListData,
   StatusListVerifableCredential,
 } from './interfaces/status-list-data.interface';
-import { securityLoader } from '@digitalbazaar/security-document-loader';
 import { replaceBit, searchBit } from '@share/share';
-import { signedCredential } from './utils/signed-status-list-vc';
+import {
+  setDocumentLoader,
+  signedCredential,
+} from './utils/signed-status-list-vc';
 import { transferStatusListDatafromVc } from './utils/transfer-status-list-data-from-vc';
 import path from 'path';
 import { loadRegistry, saveRegistry } from '@share/share';
@@ -30,18 +32,22 @@ import {
   ResourceArgs,
   STATUS_CODE,
 } from '@share/share/common/message/error-message';
-import { contexts as statusListContexts } from './context';
+import {
+  fileLoader,
+  KeyFileDataLoader,
+} from '@share/share/common/key/provider.key';
 
 @Injectable()
 export class StatusListService implements OnApplicationBootstrap {
   private documentLoader: any;
   private readonly statusListCredentialMax: number;
-  private readonly issuerDid: string;
   private readonly logger = new Logger(StatusListService.name);
   private ipfsAccessor: IpfsAccessor;
   private registryMap: Map<string, string>;
   private readonly ipfsPeerUrl: string;
   private registryFilePath: string;
+  private readonly keyFileLoader: KeyFileDataLoader;
+  private readonly issuerDid: string;
   constructor(private configService: ConfigService) {
     const url0 = this.configService.get<string>('STATUS_LIST_CREDENTIA_MAX');
     if (!url0) {
@@ -51,14 +57,17 @@ export class StatusListService implements OnApplicationBootstrap {
     }
     this.statusListCredentialMax = parseInt(url0);
     const url1 = this.configService.get<string>(
-      'STATUSLIST_SERVICE_PROVIDER_DID',
+      'STATUSLIST_SERVICE_PROVIDER_KEY_DATA',
     );
     if (!url1) {
       throw new Error(
-        'STATUSLIST_SERVICE_PROVIDER_DID environment variable is not set.',
+        'STATUSLIST_SERVICE_PROVIDER_KEY_DATA environment variable is not set.',
       );
     }
-    this.issuerDid = url1;
+    const { loader, key } = fileLoader(url1);
+    this.issuerDid = key;
+    this.keyFileLoader = loader;
+
     const url2 = this.configService.get<string>('IPFS_PEER_URL');
     if (!url2) {
       throw new Error('IPFS_PEER_URL environment variable is not set.');
@@ -74,9 +83,7 @@ export class StatusListService implements OnApplicationBootstrap {
       'data',
       'status-list-registry.json',
     );
-    const loader = securityLoader();
-    loader.addDocuments({ documents: [...statusListContexts] });
-    this.documentLoader = loader.build();
+    this.documentLoader = setDocumentLoader();
   }
   async onApplicationBootstrap() {
     this.logger.log('Application bootstrap completed. Initializing...');
@@ -136,7 +143,7 @@ export class StatusListService implements OnApplicationBootstrap {
     }
   }
 
-  async readIpfsDataAndNotFoundError(listId: string): Promise<{
+  async readIpfsData(listId: string): Promise<{
     credential: StatusListVerifableCredential;
     currentStatusListCid: string;
   }> {
@@ -158,7 +165,7 @@ export class StatusListService implements OnApplicationBootstrap {
       )) as StatusListVerifableCredential;
       return { credential, currentStatusListCid };
     } catch (error) {
-      this.logger.error('Error in readIpfsDataAndNotFoundError:', error);
+      this.logger.error('Error in readIpfsData:', error);
       if (error instanceof HttpException) {
         throw new HttpException(
           {
@@ -177,24 +184,33 @@ export class StatusListService implements OnApplicationBootstrap {
       );
     }
   }
-  async readIpfsDataAndAlredyError(
-    listId: string,
-  ): Promise<StatusListVerifableCredential> {
+  isExistsRegistryOrThrow(listId: string, exists: boolean): boolean {
     const errors: RegistrationErrorDetails[] = [];
+    const resurceArgs: ResourceArgs = {
+      resourceType: RESOURCE_TYPE.TRUSTED_ISSUER,
+      identifier: listId,
+    };
     try {
       const currentStatusListCid = this.registryMap.get(listId);
-      if (currentStatusListCid) {
+      if (exists) {
+        if (currentStatusListCid) {
+          errors.push({
+            message: `Status list with List ID ${listId} already exists in registory.`,
+          });
+          throw new HttpException(errors, HttpStatus.BAD_REQUEST);
+        } else {
+          return true;
+        }
+      } else if (!currentStatusListCid) {
         errors.push({
-          message: `Status list with List ID ${listId} already exists in registory.`,
+          message: ERROR_MESSAGES.RESOURCE_NOT_FOUND(resurceArgs),
         });
         throw new HttpException(errors, HttpStatus.BAD_REQUEST);
+      } else {
+        return true;
       }
-      const credential = (await this.ipfsAccessor.fetchJsonFromIpfs(
-        currentStatusListCid!,
-      )) as StatusListVerifableCredential;
-      return credential;
     } catch (error) {
-      this.logger.error('Error in readIpfsDataAndAlredyError:', error);
+      this.logger.error('Error in isExistsRegistryOrThrow:', error);
       if (error instanceof HttpException) {
         throw new HttpException(
           {
@@ -391,6 +407,7 @@ export class StatusListService implements OnApplicationBootstrap {
       const signedVC = await signedCredential(
         statusListData,
         this.issuerDid,
+        this.keyFileLoader,
         this.documentLoader,
       );
       return signedVC;

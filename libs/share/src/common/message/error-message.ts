@@ -64,7 +64,7 @@ export const ERROR_MESSAGES = {
   INTERNAL_ERROR: 'An internal server error occurred. prease contact support.',
 
   // 外部APIコールで発生したエラー
-  EXTERNAL_API_CALL_FAILD: 'Integration with the external API has failed.'
+  EXTERNAL_API_CALL_FAILD: 'Integration with the external API has failed.',
   // ... 他のメッセージ ...
 };
 

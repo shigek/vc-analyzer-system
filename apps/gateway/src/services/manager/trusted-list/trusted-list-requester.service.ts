@@ -8,9 +8,7 @@ import axios from 'axios';
 export class TrustedListsRequesterService {
   private readonly trustedListUrl: string;
   private readonly logger = new Logger(TrustedListsRequesterService.name);
-  constructor(
-    private configService: ConfigService,
-  ) {
+  constructor(private configService: ConfigService) {
     const url = this.configService.get<string>('TRUSTED_LIST_URL');
     if (!url) {
       throw new Error('TRUSTED_LIST_URL environment variable is not set.');
@@ -32,12 +30,7 @@ export class TrustedListsRequesterService {
       return response.data;
     } catch (error) {
       this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD);
-      throw getAxionResponse(
-        error,
-        'Status List',
-        [],
-        correlationId,
-      );
+      throw getAxionResponse(error, 'Status List', [], correlationId);
     }
   }
   async updateTrustedList(
@@ -59,12 +52,7 @@ export class TrustedListsRequesterService {
       return response.data;
     } catch (error) {
       this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD);
-      throw getAxionResponse(
-        error,
-        'Status List',
-        [subjectDid],
-        correlationId,
-      );
+      throw getAxionResponse(error, 'Status List', [subjectDid], correlationId);
     }
   }
   async deleteTrustedList(
@@ -86,12 +74,7 @@ export class TrustedListsRequesterService {
       return response.data;
     } catch (error) {
       this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD);
-      throw getAxionResponse(
-        error,
-        'Status List',
-        [subjectDid],
-        correlationId,
-      );
+      throw getAxionResponse(error, 'Status List', [subjectDid], correlationId);
     }
   }
 }

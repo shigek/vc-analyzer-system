@@ -7,6 +7,7 @@ import {
   Body,
   Delete,
   UseFilters,
+  ValidationPipe,
 } from '@nestjs/common';
 import { TrustedListService } from '../services/trusted-list.service';
 import { Response } from 'express';
@@ -15,7 +16,6 @@ import { ConfigService } from '@nestjs/config';
 import { SubjectDidUpdateDto } from '../dto/subject-did-update';
 import { AllExceptionsFilter } from '@share/share/common/filters/all-exceptions.filter';
 import { SubjectDidRegistrationDto } from '../dto/subject-did-registration';
-import { ValidationPipe } from '@share/share/common/pipe/validation.pipe';
 import { SubjectDidDeleteDto } from '../dto/subject-did-delete';
 import { storage } from '@share/share/common/strage/storage';
 import { CredentialSubject } from '../interfaces/trusted-vc-data.interface';
@@ -50,18 +50,19 @@ export class ProtectedController {
   ): Promise<any> {
     const request = storage.getStore() as any;
     const subjectDid = subjectDidRegistrationDto.subjectDid;
-    //1.DIDのバリデート
-    this.trustedListService.validateDid(subjectDid);
 
-    //2.ファイル読み込む
-    await this.trustedListService.readIpfsDataAndAlredyError(subjectDid);
+    //1.ファイルの存在チェック（存在したら、例外がスローされる)
+    this.trustedListService.isExistsRegistryOrThrow(subjectDid, true);
 
     //2.署名を打つ
-    const signedCredential =
-      await this.trustedListService.issue(subjectDid);
+    const signedCredential = await this.trustedListService.issue({ subjectDid });
 
     //3.登録する
-    const { fetchedCid } = await this.trustedListService.registration(subjectDid, signedCredential, false);
+    const { fetchedCid } = await this.trustedListService.registration(
+      subjectDid,
+      signedCredential,
+      false,
+    );
 
     const responsePayload = {
       trustedIssuer: subjectDid,
@@ -91,17 +92,17 @@ export class ProtectedController {
     //1.validUntilのバリデート
     this.trustedListService.validateValidUnit(updateDto.validUntil);
 
-    //1.DIDのバリデート
-    this.trustedListService.validateDid(subjectDid);
+    //2.ファイルの存在チェック（存在しなかったら、例外がスローされる)
+    this.trustedListService.isExistsRegistryOrThrow(subjectDid, false);
 
-    //2.ファイル読み込む
+    //3.ファイル読み込む
     const { credential } =
-      await this.trustedListService.readIpfsDataAndNotFoundError(subjectDid);
+      await this.trustedListService.readIpfsData(subjectDid);
 
-    //3.署名検証と、subjectDidのチェック
+    //4.署名検証と、subjectDidのチェック
     await this.trustedListService.verifyProofAndId(subjectDid, credential);
 
-    //4. credentialSubjectを変更する
+    //5. credentialSubjectを変更する
     const credentialSubject = credential.credentialSubject as CredentialSubject;
     if (updateDto.validUntil) {
       credentialSubject.trustedIssuerEntry.validUntil = updateDto.validUntil;
@@ -112,12 +113,15 @@ export class ProtectedController {
     credential.credentialSubject.trustedIssuerEntry =
       credentialSubject.trustedIssuerEntry;
     delete credential.proof; // proofは新規になるのでいったん削除
-    //5.署名を打つ
-    const signedCredential =
-      await this.trustedListService.issue(subjectDid);
+    //6.署名を打つ
+    const signedCredential = await this.trustedListService.issue({ credential, subjectDid });
 
-    //6.登録する
-    const { fetchedCid } = await this.trustedListService.registration(subjectDid, signedCredential, false);
+    //5.登録する
+    const { fetchedCid } = await this.trustedListService.registration(
+      subjectDid,
+      signedCredential,
+      true,
+    );
 
     const endTime = process.hrtime(request.startTime);
     const processingTimeMillis = (endTime[0] * 1e9 + endTime[1]) / 1e6;
@@ -144,12 +148,11 @@ export class ProtectedController {
   ): Promise<any> {
     const request = storage.getStore() as any;
 
-    //1.DIDのバリデート
-    this.trustedListService.validateDid(deleteDto.subjectDid);
-
-    //2.ファイル読み込む
-    await this.trustedListService.readIpfsDataAndNotFoundError(deleteDto.subjectDid);
-
+    //2.ファイルの存在チェック（存在しなかったら、例外がスローされる)
+    this.trustedListService.isExistsRegistryOrThrow(
+      deleteDto.subjectDid,
+      false,
+    );
 
     //3.管理情報を削除
     const { subjectDid } = await this.trustedListService.deleteRegistry(
@@ -168,7 +171,7 @@ export class ProtectedController {
         version: '0.0.1',
         timestamp: new Date().toISOString(),
         processingTimeMillis,
-      }
+      },
     };
     return res.send(finalResponse);
   }
