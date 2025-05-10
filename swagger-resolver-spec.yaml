@@ -1,0 +1,180 @@
+openapi: 3.0.0
+paths:
+  /resolve/{did}:
+    get:
+      description: このエンドポイントはDIDを解決します。入力としてDIDを受け取ります。
+      operationId: ResolverController_handleGetUniversalResol
+      parameters:
+        - name: did
+          required: true
+          in: path
+          description: 解決するDIDを指定する
+          schema:
+            example: did:key:z6MknCCLeeHBUaHu4aHSVLDCYQW9gjVJ7a63FpMvtuVMy53T
+            type: string
+        - name: Accept
+          required: false
+          in: header
+          description: 処理識別子
+          examples:
+            application/did+json:
+              value: applicaiton/json
+              description: DIDドキュメントのメディアタイプ（JSON）
+            application/did+ld+json:
+              value: applicaiton/did+ld+json
+              description: DIDドキュメントのメディアタイプ（JSON-LD）。
+            application/ld+json;profile="https://w3id.org/did-resolution":
+              value: application/ld+json;profile="https://w3id.org/did-resolution"
+              description: DID解決結果のメディアタイプ (JSON-LD).
+          schema:
+            type: string
+        - name: X-Correlation-ID
+          in: header
+          description: 処理識別子
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          content:
+            application/did+json:
+              schema:
+                type: object
+                description: The DID document (JSON representation).
+                example:
+                  id: did:indy:sovrin:WRfXPg8dantKVubE3HX8pw
+                  verificationMethod:
+                    - id: did:indy:sovrin:WRfXPg8dantKVubE3HX8pw#key-1
+                      type: Ed25519VerificationKey2018
+                      publicKeyBase58: H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV
+            application/did+ld+json:
+              schema:
+                type: object
+                description: The DID document (JSON-LD representation).
+                example:
+                  '@context': https://www.w3.org/ns/did/v1
+                  id: did:indy:sovrin:WRfXPg8dantKVubE3HX8pw
+                  verificationMethod:
+                    - id: did:indy:sovrin:WRfXPg8dantKVubE3HX8pw#key-1
+                      type: Ed25519VerificationKey2018
+                      publicKeyBase58: H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV
+            application/ld+json;profile="https://w3id.org/did-resolution":
+              schema:
+                description: The DID resolution result.
+                type: object
+                properties:
+                  didDocument:
+                    type: object
+                  didResolutionMetadata:
+                    type: object
+                    additionalProperties: {}
+                  didDocumentMetadata:
+                    type: object
+                    additionalProperties: {}
+          description: DIDの解決に成功した
+        '400':
+          description: リクエストが無効
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+        '404':
+          description: データが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+        '406':
+          description: サポートされていない表現です。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+        '410':
+          description: 正常に解決されましたが、DIDは無効化されています。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '501':
+          description: DIDメソッドはサポートされていません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+      summary: Resolver DID
+      tags:
+        - Resolver
+info:
+  title: VC Analyzer System DID Resolver API
+  description: API documentation for the VC Analyzer System management plane.
+  version: '1.0'
+  contact: {}
+tags: []
+servers: []
+components:
+  schemas:
+    ResolverErrorResponse:
+      type: object
+      properties:
+        didDocument:
+          type: object
+          description: DIDドキュメント（JSON表現）
+        didResolutionMetadata:
+          type: object
+          description: DID 解決メタデータ
+          additionalProperties: {}
+        didDocumentMetadata:
+          type: object
+          description: DID 共通メタデータ
+          additionalProperties: {}
+      required:
+        - didDocument
+        - didResolutionMetadata
+        - didDocumentMetadata
+    ExternalServiceErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: エラーメッセージ
+        code:
+          type: string
+          description: エラーコード
+        serviceError:
+          description: 外部サービス連携エラー情報
+          allOf:
+            - $ref: '#/components/schemas/ResolverErrorResponse'
+        correlationId:
+          type: string
+          description: 処理識別子
+      required:
+        - message
+        - code
+        - serviceError
+        - correlationId
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: エラーメッセージ
+        code:
+          type: string
+          description: エラーコード
+        details:
+          type: object
+          description: エラー詳細
+        correlationId:
+          type: string
+          description: 処理識別子
+      required:
+        - message
+        - code
+        - correlationId

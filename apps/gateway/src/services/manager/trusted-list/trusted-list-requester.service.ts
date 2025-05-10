@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { getAxionResponse } from '@share/share/common/axios/error-handler.axios';
-import { ERROR_MESSAGES } from '@share/share/common/message/error-message';
+import { ERROR_MESSAGES } from '@share/share/common/message/common-message';
 import axios from 'axios';
 
 @Injectable()
@@ -15,7 +15,11 @@ export class TrustedListsRequesterService {
     }
     this.trustedListUrl = url;
   }
-  async addTrustedList(createDao: any, correlationId: string): Promise<any> {
+  async addTrustedList(
+    createDao: any,
+    accessToken: string,
+    correlationId: string,
+  ): Promise<any> {
     try {
       const response = await axios.post(
         `${this.trustedListUrl}/trusted-issuers`,
@@ -24,18 +28,20 @@ export class TrustedListsRequesterService {
           headers: {
             'X-Correlation-ID': correlationId,
             'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
           },
         },
       );
       return response.data;
     } catch (error) {
       this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD);
-      throw getAxionResponse(error, 'Status List', [], correlationId);
+      throw getAxionResponse(error, 'Trusted list', [], correlationId);
     }
   }
   async updateTrustedList(
     subjectDid: string,
     createDao: any,
+    accessToken: string,
     correlationId: string,
   ): Promise<any> {
     try {
@@ -46,18 +52,25 @@ export class TrustedListsRequesterService {
           headers: {
             'X-Correlation-ID': correlationId,
             'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
           },
         },
       );
       return response.data;
     } catch (error) {
       this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD);
-      throw getAxionResponse(error, 'Status List', [subjectDid], correlationId);
+      throw getAxionResponse(
+        error,
+        'Trusted list',
+        [subjectDid],
+        correlationId,
+      );
     }
   }
   async deleteTrustedList(
     subjectDid: string,
     createDao: any,
+    accessToken: string,
     correlationId: string,
   ): Promise<any> {
     try {
@@ -67,6 +80,7 @@ export class TrustedListsRequesterService {
           headers: {
             'X-Correlation-ID': correlationId,
             'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
           },
           data: createDao,
         },
@@ -74,7 +88,12 @@ export class TrustedListsRequesterService {
       return response.data;
     } catch (error) {
       this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD);
-      throw getAxionResponse(error, 'Status List', [subjectDid], correlationId);
+      throw getAxionResponse(
+        error,
+        'Trusted list',
+        [subjectDid],
+        correlationId,
+      );
     }
   }
 }

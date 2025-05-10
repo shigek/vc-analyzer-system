@@ -11,6 +11,12 @@ export interface ValidationDetailArgs {
   reason: string; // 失敗理由
 }
 
+export const SERVICE_NAME = {
+  STATUS_LIST_SERVICE: 'status-list-service',
+  TRUSTED_LIST_SERVICE: 'trusted-issuer-service',
+  RESOLVER_LIST_SERVICE: 'resolver-service',
+};
+
 export const STATUS_CODE = {
   REVOKE: 'revoked',
   VALID: 'valid',

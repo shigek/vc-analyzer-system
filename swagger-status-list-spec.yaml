@@ -1,0 +1,82 @@
+openapi: 3.0.0
+paths:
+  /status-checks/{listId}/{index}:
+    get:
+      operationId: StatusListController_handleStatusCheks
+      parameters:
+        - name: listId
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: index
+          required: true
+          in: path
+          schema:
+            type: number
+      responses:
+        '200':
+          description: ''
+      tags: &ref_0
+        - StatusList
+  /status-lists/register:
+    post:
+      operationId: StatusListController_hundleRegistrationStatus
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusListCreateDto'
+      responses:
+        '201':
+          description: ''
+      tags: *ref_0
+  /status-lists/{listId}/entries/{index}/status:
+    put:
+      operationId: StatusListController_handleUpdateStatus
+      parameters:
+        - name: listId
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: index
+          required: true
+          in: path
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusListUpdateDto'
+      responses:
+        '200':
+          description: ''
+      tags: *ref_0
+info:
+  title: VC Analyzer System Status List API
+  description: API documentation for the VC Analyzer System management plane.
+  version: '1.0'
+  contact: {}
+tags: []
+servers: []
+components:
+  schemas:
+    StatusListCreateDto:
+      type: object
+      properties:
+        credentials:
+          type: number
+      required:
+        - credentials
+    StatusListUpdateDto:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status

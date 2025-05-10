@@ -36,7 +36,7 @@ import {
   CODE_MESSAGES,
   RESOURCE_TYPE,
   TRUSTED_CODE,
-} from '@share/share/common/message/error-message';
+} from '@share/share/common/message/common-message';
 import {
   fileLoader,
   KeyFileDataLoader,
@@ -396,7 +396,10 @@ export class TrustedListService implements OnApplicationBootstrap {
       );
     }
   }
-  async issue(options: { subjectDid: string, credential?: TrustedListVerifableCredential }): Promise<TrustedListVerifableCredential> {
+  async issue(options: {
+    subjectDid: string;
+    credential?: TrustedListVerifableCredential;
+  }): Promise<TrustedListVerifableCredential> {
     try {
       if (options.credential) {
         const signedVC = await updateCredentialSigned(

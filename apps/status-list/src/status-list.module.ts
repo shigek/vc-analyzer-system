@@ -2,12 +2,12 @@ import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { StatusListController } from './status-list.controller';
 import { StatusListService } from './status-list.service';
 import { ConfigModule } from '@nestjs/config';
-import { ShareModule } from '@share/share/share.module';
 import { randomUUID } from 'crypto';
 import { storage } from '@share/share/common/strage/storage';
+import { AuthModule } from '@share/share/common/auth/auth.module';
 
 @Module({
-  imports: [ShareModule, ConfigModule.forRoot({ isGlobal: true })],
+  imports: [AuthModule, ConfigModule.forRoot({ isGlobal: true })],
   controllers: [StatusListController],
   providers: [StatusListService],
 })

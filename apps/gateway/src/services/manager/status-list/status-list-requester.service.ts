@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { getAxionResponse } from '@share/share/common/axios/error-handler.axios';
-import { ERROR_MESSAGES } from '@share/share/common/message/error-message';
+import { ERROR_MESSAGES } from '@share/share/common/message/common-message';
 import axios from 'axios';
 
 @Injectable()
@@ -15,7 +15,11 @@ export class StatusListsRequesterService {
     }
     this.statusListUrl = url;
   }
-  async addStatusList(createDao: any, correlationId: string): Promise<any> {
+  async addStatusList(
+    createDao: any,
+    accessToken: string,
+    correlationId: string,
+  ): Promise<any> {
     try {
       const response = await axios.post(
         `${this.statusListUrl}/status-lists/register`,
@@ -24,6 +28,7 @@ export class StatusListsRequesterService {
           headers: {
             'X-Correlation-ID': correlationId,
             'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
           },
         },
       );
@@ -37,6 +42,7 @@ export class StatusListsRequesterService {
     listId: string,
     index: number,
     updateDao: any,
+    accessToken: string,
     correlationId: string,
   ): Promise<any> {
     try {
@@ -47,6 +53,7 @@ export class StatusListsRequesterService {
           headers: {
             'X-Correlation-ID': correlationId,
             'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
           },
         },
       );

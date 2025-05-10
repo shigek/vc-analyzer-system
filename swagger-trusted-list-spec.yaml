@@ -1,0 +1,94 @@
+openapi: 3.0.0
+paths:
+  /trusted-issuers/{subjectDid}:
+    get:
+      operationId: PublicController_hundleTrustedIssuers
+      parameters:
+        - name: subjectDid
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+      tags:
+        - Public
+    put:
+      operationId: ProtectedController_hundlePutTrustedIssuers
+      parameters:
+        - name: subjectDid
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubjectDidUpdateDto'
+      responses:
+        '200':
+          description: ''
+      tags: &ref_0
+        - Protected
+  /trusted-issuers:
+    post:
+      operationId: ProtectedController_hundlePostTrustedIssuers
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubjectDidRegistrationDto'
+      responses:
+        '201':
+          description: ''
+      tags: *ref_0
+    delete:
+      operationId: ProtectedController_hundleDeleteTrustedIssuers
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubjectDidDeleteDto'
+      responses:
+        '200':
+          description: ''
+      tags: *ref_0
+info:
+  title: VC Analyzer System Trusted List API
+  description: API documentation for the VC Analyzer System management plane.
+  version: '1.0'
+  contact: {}
+tags: []
+servers: []
+components:
+  schemas:
+    SubjectDidRegistrationDto:
+      type: object
+      properties:
+        subjectDid:
+          type: string
+        policy:
+          type: object
+      required:
+        - subjectDid
+    SubjectDidUpdateDto:
+      type: object
+      properties:
+        validUntil:
+          type: string
+        policy:
+          type: object
+    SubjectDidDeleteDto:
+      type: object
+      properties:
+        subjectDid:
+          type: string
+      required:
+        - subjectDid

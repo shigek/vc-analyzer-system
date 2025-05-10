@@ -2,7 +2,8 @@ import fs from 'fs';
 import path from 'path';
 export interface KeyData {
   type: '';
-  key: '';
+  key?: '';
+  public?: string;
   private: '';
 }
 
@@ -38,8 +39,10 @@ export function fileLoader(url: string): {
     const filePath = path.join(__dirname, file);
     const data = fs.readFileSync(filePath, 'utf8');
     const keyData = JSON.parse(data) as KeyData;
-    loader.addStatic(keyData.key, keyData);
-    return { key: keyData.key, loader };
+    const key = keyData.key! || keyData.public!;
+    loader.addStatic(key, keyData);
+
+    return { key, loader };
   } catch (error) {
     console.error(`Failed to load keyfile from ${url}:`, error);
     throw new Error(`Failed to load keyfile from ${url}`);

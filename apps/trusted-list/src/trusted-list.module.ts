@@ -7,9 +7,10 @@ import { ShareModule } from '@share/share/share.module';
 import type { Response } from 'express';
 import { randomUUID } from 'crypto';
 import { storage } from '@share/share/common/strage/storage';
+import { AuthModule } from '@share/share/common/auth/auth.module';
 
 @Module({
-  imports: [ShareModule, ConfigModule.forRoot({ isGlobal: true })],
+  imports: [AuthModule, ShareModule, ConfigModule.forRoot({ isGlobal: true })],
   controllers: [PublicController, ProtectedController],
   providers: [TrustedListService],
 })

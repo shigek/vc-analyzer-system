@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { getAxionResponse } from '@share/share/common/axios/error-handler.axios';
-import { ERROR_MESSAGES } from '@share/share/common/message/error-message';
+import { ERROR_MESSAGES } from '@share/share/common/message/common-message';
 import axios from 'axios';
 
 @Injectable()

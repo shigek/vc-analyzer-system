@@ -1,0 +1,486 @@
+openapi: 3.0.0
+paths:
+  /:
+    get:
+      operationId: AppController_haldleHello
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      tags:
+        - Root
+  /contexts/trusted-list/v1:
+    get:
+      operationId: ContextController_handleContextLoader
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      tags:
+        - Context
+  /manager/status-lists/register:
+    post:
+      operationId: PrivateAnalyzerController_handleAddStatusList
+      parameters:
+        - name: X-Correlation-ID
+          required: false
+          in: header
+          description: 処理識別子
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusListCreateDto'
+      responses:
+        '201':
+          description: Status listの登録が正常終了した
+        '400':
+          description: リクエストが無効
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+        '404':
+          description: データが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+        '422':
+          description: VCデータの検証に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security: &ref_0
+        - gateway-jwt: []
+      tags: &ref_1
+        - manager
+  /manager/status-lists/{listId}/entries/{index}/status:
+    put:
+      operationId: PrivateAnalyzerController_handleUpdateStatusListStatus
+      parameters:
+        - name: X-Correlation-ID
+          required: false
+          in: header
+          description: 処理識別子
+          schema:
+            type: string
+        - name: listId
+          required: true
+          in: path
+          description: Status list lisの識別子
+          schema:
+            type: string
+        - name: index
+          required: true
+          in: path
+          description: Status listの状態が設定されている位置情報
+          schema:
+            example: 20
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusListUpdateDto'
+      responses:
+        '200':
+          description: Status listの状態更新が正常終了した
+        '400':
+          description: リクエストが無効
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+        '404':
+          description: データが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+        '422':
+          description: データの検証に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security: *ref_0
+      tags: *ref_1
+  /manager/trusted-issuers:
+    post:
+      operationId: PrivateAnalyzerController_handleAddTrustedIssuer
+      parameters:
+        - name: X-Correlation-ID
+          required: false
+          in: header
+          description: 処理識別子
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubjectDidRegistrationDto'
+      responses:
+        '201':
+          description: Trusted listの登録が正常終了した
+        '400':
+          description: リクエストが無効
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+        '404':
+          description: データが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+        '422':
+          description: データの検証に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security: *ref_0
+      tags: *ref_1
+    delete:
+      operationId: PrivateAnalyzerController_handleDeleteTrustedIssuer
+      parameters:
+        - name: X-Correlation-ID
+          required: false
+          in: header
+          description: 処理識別子
+          schema:
+            type: string
+        - name: subjectDid
+          required: true
+          in: path
+          description: 処理依頼者のDIDを設定する
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubjectDidDeleteDto'
+      responses:
+        '200':
+          description: Trusted listの削除が正常終了した
+        '400':
+          description: リクエストが無効
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+        '404':
+          description: データが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+        '422':
+          description: データの検証に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security: *ref_0
+      tags: *ref_1
+  /manager/trusted-issuers/{subjectDid}:
+    put:
+      operationId: PrivateAnalyzerController_handleUpdateTrustedIssuer
+      parameters:
+        - name: X-Correlation-ID
+          required: false
+          in: header
+          description: 処理識別子
+          schema:
+            type: string
+        - name: subjectDid
+          required: true
+          in: path
+          description: 処理依頼者のDIDを設定する
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubjectDidUpdateDto'
+      responses:
+        '200':
+          description: Trusted listの更新が正常終了した
+        '400':
+          description: リクエストが無効
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+        '404':
+          description: データが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+        '422':
+          description: データの検証に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security: *ref_0
+      tags: *ref_1
+  /verifiers/resolve/{did}:
+    get:
+      operationId: PublicAnalyzerController_hundleGetDidDocument
+      parameters:
+        - name: X-Correlation-ID
+          required: false
+          in: header
+          description: 処理識別子
+          schema:
+            type: string
+        - name: did
+          required: true
+          in: path
+          description: 取得するDIDを設定する
+          schema:
+            type: string
+      responses:
+        '200':
+          description: DIDドキュメントの取得が正常に終了した
+        '400':
+          description: リクエストが無効
+        '404':
+          description: データが存在しない
+        '422':
+          description: データの検証に失敗した
+        '500':
+          description: サーバー内部エラー
+      summary: DIDドキュメントを取得する
+      tags: &ref_2
+        - verifiers
+  /verifiers/status-checks/{listId}/{index}:
+    get:
+      operationId: PublicAnalyzerController_hundleGetStatus
+      parameters:
+        - name: X-Correlation-ID
+          required: false
+          in: header
+          description: 処理識別子
+          schema:
+            type: string
+        - name: listId
+          required: true
+          in: path
+          description: Status list lisの識別子
+          schema:
+            type: string
+        - name: index
+          required: true
+          in: path
+          description: Status listの状態が設定されている位置情報
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Status listの状態取得が正常に終了した
+        '400':
+          description: リクエストが無効
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+        '404':
+          description: データが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+        '422':
+          description: データの検証に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+      summary: Status listの状態を取得する
+      tags: *ref_2
+  /verifiers/trusted-issuers/{did}:
+    get:
+      operationId: PublicAnalyzerController_handleTrustedIssuer
+      parameters:
+        - name: X-Correlation-ID
+          required: false
+          in: header
+          description: 処理識別子
+          schema:
+            type: string
+        - name: did
+          required: true
+          in: path
+          description: 発行者のDID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Status listの状態取得が正常に終了した
+        '400':
+          description: リクエストが無効
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+        '404':
+          description: データが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+        '422':
+          description: データの検証に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      summary: Trusted listの状態を取得する
+      tags: *ref_2
+info:
+  title: VC Analyzer System GateWay API
+  description: API documentation for the VC Analyzer System management plane.
+  version: '1.0'
+  contact: {}
+tags: []
+servers: []
+components:
+  schemas:
+    StatusListCreateDto:
+      type: object
+      properties:
+        credentials:
+          type: number
+          example: '1000'
+      required:
+        - credentials
+    ExternalServiceErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: エラーメッセージ
+        code:
+          type: string
+          description: エラーメッセージ
+        serviceError:
+          type: object
+          description: 外部サービス連携エラー情報
+        correlationId:
+          type: string
+          description: 処理識別子
+      required:
+        - message
+        - code
+        - serviceError
+        - correlationId
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: エラーメッセージ
+        code:
+          type: string
+          description: エラーメッセージ
+        details:
+          type: object
+          description: エラー詳細
+        correlationId:
+          type: string
+          description: 処理識別子
+      required:
+        - message
+        - code
+        - correlationId
+    StatusListUpdateDto:
+      type: object
+      properties:
+        status:
+          type: string
+          example: revoked
+      required:
+        - status
+    SubjectDidRegistrationDto:
+      type: object
+      properties:
+        subjectDid:
+          type: string
+          example: did:key:abc
+        policy:
+          type: object
+      required:
+        - subjectDid
+    SubjectDidUpdateDto:
+      type: object
+      properties:
+        validUntil:
+          type: string
+        policy:
+          type: object
+    SubjectDidDeleteDto:
+      type: object
+      properties:
+        subjectDid:
+          type: string
+          example: did:key:abc
+      required:
+        - subjectDid

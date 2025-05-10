@@ -8,6 +8,7 @@ import {
   Delete,
   UseFilters,
   ValidationPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { TrustedListService } from '../services/trusted-list.service';
 import { Response } from 'express';
@@ -19,6 +20,7 @@ import { SubjectDidRegistrationDto } from '../dto/subject-did-registration';
 import { SubjectDidDeleteDto } from '../dto/subject-did-delete';
 import { storage } from '@share/share/common/strage/storage';
 import { CredentialSubject } from '../interfaces/trusted-vc-data.interface';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('trusted-issuers')
 @UseFilters(AllExceptionsFilter)
@@ -42,6 +44,7 @@ export class ProtectedController {
     }
     this.serviceName = url2;
   }
+  @UseGuards(AuthGuard('gateway-jwt'))
   @Post()
   async hundlePostTrustedIssuers(
     @Body(new ValidationPipe())
@@ -55,7 +58,9 @@ export class ProtectedController {
     this.trustedListService.isExistsRegistryOrThrow(subjectDid, true);
 
     //2.署名を打つ
-    const signedCredential = await this.trustedListService.issue({ subjectDid });
+    const signedCredential = await this.trustedListService.issue({
+      subjectDid,
+    });
 
     //3.登録する
     const { fetchedCid } = await this.trustedListService.registration(
@@ -82,6 +87,7 @@ export class ProtectedController {
     };
     return res.status(201).send(finalResponse);
   }
+  @UseGuards(AuthGuard('gateway-jwt'))
   @Put(':subjectDid')
   async hundlePutTrustedIssuers(
     @Param('subjectDid') subjectDid: string,
@@ -114,7 +120,10 @@ export class ProtectedController {
       credentialSubject.trustedIssuerEntry;
     delete credential.proof; // proofは新規になるのでいったん削除
     //6.署名を打つ
-    const signedCredential = await this.trustedListService.issue({ credential, subjectDid });
+    const signedCredential = await this.trustedListService.issue({
+      credential,
+      subjectDid,
+    });
 
     //5.登録する
     const { fetchedCid } = await this.trustedListService.registration(
@@ -141,6 +150,7 @@ export class ProtectedController {
     };
     return res.send(finalResponse);
   }
+  @UseGuards(AuthGuard('gateway-jwt'))
   @Delete()
   async hundleDeleteTrustedIssuers(
     @Body(new ValidationPipe()) deleteDto: SubjectDidDeleteDto,

@@ -7,10 +7,10 @@ import path from 'path';
 // import { AuthService } from './auth.service'; // 必要に応じて、ユーザーやクライアントの情報を取得するサービス
 
 // JWTペイロードの型定義（JWTに含まれる情報の型）
-interface JwtPayload {
+export interface JwtPayload {
   sub: string; // 通常、サブジェクト（JWTの対象）。Client Credentialsの場合、クライアントIDなど
   clientId: string; // クライアントIDをカスタムクレームとして含む場合
-  scope: string[];
+  scopes: string[];
   // ... その他のペイロード情報 ...
 }
 const PUBLIC_KEY_FILE_PATH = path.join(
@@ -53,7 +53,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // 検証が成功した場合、validate メソッドは「認証されたユーザー（またはクライアント）」を表す値を返します。
     // この返り値は、後でコントローラーの @Req() user や @GetUser() デコレータでアクセスできるようになります。
     // Client Credentials の場合、返り値はクライアントの情報（クライアントIDなど）にすると良いでしょう。
-    return { clientId: payload.sub }; // 例: クライアントIDを返す
+    return { clientId: payload.sub, scopes: payload.scopes }; // 例: クライアントIDを返す
     // return payload.sub; // sub をそのまま返す場合
   }
 }

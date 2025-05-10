@@ -8,7 +8,8 @@ import path from 'path';
 const testPayload = {
   sub: 'vc-analyzer-management-client', // 例: クライアントID
   clientId: 'vc-analyzer-management-client', // カスタムクレームとして含める場合
-  scopes: ['trusted-list:manage'] // 例: 権限情報を含める場合
+  scope: 'trusted-list:manage,status-list:manage', // scopeクレームを利用する場合
+  scopes: ['trusted-list:manage', 'status-list:manage'] // 別のクレームを使う場合
 };
 
 // JWT の有効期限（アプリケーションの設定と合わせると良い）

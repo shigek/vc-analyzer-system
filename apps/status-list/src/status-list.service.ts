@@ -31,7 +31,7 @@ import {
   RESOURCE_TYPE,
   ResourceArgs,
   STATUS_CODE,
-} from '@share/share/common/message/error-message';
+} from '@share/share/common/message/common-message';
 import {
   fileLoader,
   KeyFileDataLoader,

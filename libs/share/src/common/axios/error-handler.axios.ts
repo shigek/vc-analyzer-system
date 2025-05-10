@@ -53,7 +53,7 @@ export function getAxionResponse(
             serviceError: axiosError.response.data,
             correlationId,
           },
-          HttpStatus.INTERNAL_SERVER_ERROR,
+          axiosError.response.status,
         );
       } else {
         return new HttpException(
