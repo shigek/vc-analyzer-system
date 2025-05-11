@@ -4,10 +4,8 @@ export interface ErrorResponse {
   error: {
     code: string;
     message: string;
-    details:
-      | ValidationErrorDetails[]
-      | VerificationErrorDetails[]
-      | RegistrationErrorDetails[];
+    externalServiceError?: { [key: string]: any };
+    details: { [key: string]: any };
   };
   serviceMetadata: ServiceMetadata;
 }

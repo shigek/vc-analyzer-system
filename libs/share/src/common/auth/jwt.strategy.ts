@@ -8,7 +8,7 @@ import { Request } from 'express';
 
 export const Permissions = {
   ISS: 'vc-analyzer-gateway',
-  AUD: ['trusted-list-service', 'status-list-service'],
+  AUD: ['trusted-issuer-service', 'status-list-service'],
   SUB: 'vc-analyzer-management-client',
 };
 
@@ -25,7 +25,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'gateway-jwt') {
   constructor(private configService: ConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), // リクエストヘッダーからBearerトークンとしてJWTを抽出
-      ignoreExpiration: true, // JWTの有効期限切れをチェックする（通常はtrue）
+      ignoreExpiration: true, // @@@@@JWTの有効期限切れをチェックする（通常はtrue）
       secretOrKeyProvider: secretOrKeyProvider,
       algorithms: ['RS256'],
     });
@@ -42,7 +42,6 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'gateway-jwt') {
     // ★★★ ここでペイロードの内容を検証 ★★★
     // Client Credentials フローの場合、ペイロードにクライアントIDなどが含まれているはずです。
     // そのクライアントIDが有効な運営主体のクライアントであるかなどをチェックします。
-
     if (payload.iss !== Permissions.ISS) {
       throw new UnauthorizedException(); // 無効なクライアントであれば認証失敗
     }
@@ -51,6 +50,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'gateway-jwt') {
     }
     for (const aud of payload.aud) {
       if (!Permissions.AUD.includes(aud)) {
+        console.log(payload);
         throw new UnauthorizedException(); // 無効なクライアントであれば認証失敗
       }
     }

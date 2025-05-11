@@ -2,6 +2,7 @@ openapi: 3.0.0
 paths:
   /trusted-issuers/{subjectDid}:
     get:
+      description: このエンドポイントはDIDを解決します。入力としてDIDを受け取ります。
       operationId: PublicController_hundleTrustedIssuers
       parameters:
         - name: subjectDid
@@ -9,18 +10,62 @@ paths:
           in: path
           schema:
             type: string
+        - name: index
+          required: true
+          in: path
+          description: 解決するDIDを指定する
+          schema:
+            example: '123'
+        - name: listId
+          required: true
+          in: path
+          description: 解決するDIDを指定する
+          schema:
+            example: urn:d8290d62-813d-44a9-98d3-fd27c85f729b
       responses:
         '200':
-          description: ''
+          description: DIDの解決に成功した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetResponse'
+        '400':
+          description: リクエストが無効
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: データが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: データの検証に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      summary: Resolver DID
       tags:
         - Public
     put:
+      description: このエンドポイントはDIDを解決します。入力としてDIDを受け取ります。
       operationId: ProtectedController_hundlePutTrustedIssuers
       parameters:
         - name: subjectDid
           required: true
           in: path
+          description: 解決するDIDを指定する
           schema:
+            example: urn:d8290d62-813d-44a9-98d3-fd27c85f729b
             type: string
       requestBody:
         required: true
@@ -30,11 +75,43 @@ paths:
               $ref: '#/components/schemas/SubjectDidUpdateDto'
       responses:
         '200':
-          description: ''
-      tags: &ref_0
+          description: DIDの解決に成功した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddOrPutResponse'
+        '400':
+          description: リクエストが無効
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: データが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: データの検証に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security: &ref_0
+        - gateway-jwt: []
+      summary: Resolver DID
+      tags: &ref_1
         - Protected
   /trusted-issuers:
     post:
+      description: このエンドポイントはDIDを解決します。入力としてDIDを受け取ります。
       operationId: ProtectedController_hundlePostTrustedIssuers
       parameters: []
       requestBody:
@@ -44,12 +121,49 @@ paths:
             schema:
               $ref: '#/components/schemas/SubjectDidRegistrationDto'
       responses:
-        '201':
-          description: ''
-      tags: *ref_0
+        '200':
+          description: DIDの解決に成功した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddOrPutResponse'
+        '400':
+          description: リクエストが無効
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: データが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: データの検証に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security: *ref_0
+      summary: Resolver DID
+      tags: *ref_1
     delete:
+      description: このエンドポイントはDIDを解決します。入力としてDIDを受け取ります。
       operationId: ProtectedController_hundleDeleteTrustedIssuers
-      parameters: []
+      parameters:
+        - name: subjectDid
+          required: true
+          in: path
+          description: 解決するDIDを指定する
+          schema:
+            example: urn:d8290d62-813d-44a9-98d3-fd27c85f729b
       requestBody:
         required: true
         content:
@@ -58,8 +172,38 @@ paths:
               $ref: '#/components/schemas/SubjectDidDeleteDto'
       responses:
         '200':
-          description: ''
-      tags: *ref_0
+          description: DIDの解決に成功した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResponse'
+        '400':
+          description: リクエストが無効
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: データが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: データの検証に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security: *ref_0
+      summary: Resolver DID
+      tags: *ref_1
 info:
   title: VC Analyzer System Trusted List API
   description: API documentation for the VC Analyzer System management plane.
@@ -69,15 +213,156 @@ tags: []
 servers: []
 components:
   schemas:
+    GetTrustedIssuer:
+      type: object
+      properties:
+        trustedIssuer:
+          type: string
+          description: 発行者のDID
+          example: did:key:z6Mkiq1TQyWPezBTGoqNvcq9b6azWMyn6HwQmbjo5LLpai68
+        status:
+          type: string
+          description: 状態コード
+          examples:
+            - value: no-trusted
+              description: 信頼されていない
+            - value: trusted
+              description: 信頼されている
+        validUntil:
+          type: string
+          description: 有効期限
+          example: '2025-05-10T12:01:04.828Z'
+      required:
+        - trustedIssuer
+        - status
+        - validUntil
+    ServiceMetadata:
+      type: object
+      properties:
+        serviceName:
+          type: string
+          description: サービス名
+        version:
+          type: string
+          description: サービスバージョン
+        timestamp:
+          type: string
+          description: 応答時間
+        processingTimeMillis:
+          type: string
+          description: 処理時間
+        ipfsGatewayUrl:
+          type: string
+          description: IPFS URL
+        fetchedCid:
+          type: string
+          description: IPFS CID
+      required:
+        - serviceName
+        - version
+        - timestamp
+        - processingTimeMillis
+        - ipfsGatewayUrl
+        - fetchedCid
+    GetResponse:
+      type: object
+      properties:
+        payload:
+          description: ペイロード
+          allOf:
+            - $ref: '#/components/schemas/GetTrustedIssuer'
+        serviceMetadata:
+          description: サービスメタ情報
+          allOf:
+            - $ref: '#/components/schemas/ServiceMetadata'
+      required:
+        - payload
+    ErrorMainResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: エラーメッセージ
+        code:
+          type: string
+          description: エラーコード
+        details:
+          description: エラー詳細
+          type: array
+          items:
+            type: object
+      required:
+        - message
+        - code
+    ErrorServiceMetadata:
+      type: object
+      properties:
+        serviceName:
+          type: string
+          description: サービス名
+        version:
+          type: string
+          description: サービスバージョン
+        timestamp:
+          type: string
+          description: 応答時間
+        processingTimeMillis:
+          type: string
+          description: 処理時間
+        correlationId:
+          type: string
+          description: 処理識別子
+      required:
+        - serviceName
+        - version
+        - timestamp
+        - processingTimeMillis
+        - correlationId
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          description: サービスエラー
+          allOf:
+            - $ref: '#/components/schemas/ErrorMainResponse'
+        serviceMetadata:
+          description: サービスメタ情報
+          allOf:
+            - $ref: '#/components/schemas/ErrorServiceMetadata'
+      required:
+        - error
     SubjectDidRegistrationDto:
       type: object
       properties:
         subjectDid:
           type: string
+          example: did:key:z6Mkiq1TQyWPezBTGoqNvcq9b6azWMyn6HwQmbjo5LLpai68
         policy:
           type: object
       required:
         - subjectDid
+    AddOrPutTrustedIssuer:
+      type: object
+      properties:
+        trustedIssuer:
+          type: string
+          description: 発行者のDID
+          example: did:key:z6Mkiq1TQyWPezBTGoqNvcq9b6azWMyn6HwQmbjo5LLpai68
+      required:
+        - trustedIssuer
+    AddOrPutResponse:
+      type: object
+      properties:
+        payload:
+          description: ペイロード
+          allOf:
+            - $ref: '#/components/schemas/AddOrPutTrustedIssuer'
+        serviceMetadata:
+          description: サービスメタ情報
+          allOf:
+            - $ref: '#/components/schemas/ServiceMetadata'
+      required:
+        - payload
     SubjectDidUpdateDto:
       type: object
       properties:
@@ -90,5 +375,39 @@ components:
       properties:
         subjectDid:
           type: string
+          example: did:key:z6Mkiq1TQyWPezBTGoqNvcq9b6azWMyn6HwQmbjo5LLpai68
       required:
         - subjectDid
+    DeleteServiceMetadata:
+      type: object
+      properties:
+        serviceName:
+          type: string
+          description: サービス名
+        version:
+          type: string
+          description: サービスバージョン
+        timestamp:
+          type: string
+          description: 応答時間
+        processingTimeMillis:
+          type: string
+          description: 処理時間
+      required:
+        - serviceName
+        - version
+        - timestamp
+        - processingTimeMillis
+    DeleteResponse:
+      type: object
+      properties:
+        payload:
+          description: ペイロード
+          allOf:
+            - $ref: '#/components/schemas/AddOrPutTrustedIssuer'
+        serviceMetadata:
+          description: サービスメタ情報
+          allOf:
+            - $ref: '#/components/schemas/DeleteServiceMetadata'
+      required:
+        - payload

@@ -32,23 +32,23 @@ export class ResolverService {
     correlationId: string,
   ): Promise<any> {
     try {
-      const response = (!accept) ?
-        await axios.get(
-          `${this.universalResolverUrl}/${this.universalResolverPath}/${did}`,
-          {
-            headers: {
-              Accept: 'application-json'
+      const response = !accept
+        ? await axios.get(
+            `${this.universalResolverUrl}/${this.universalResolverPath}/${did}`,
+            {
+              headers: {
+                Accept: 'application/json',
+              },
             },
-          },
-        ) :
-        await axios.get(
-          `${this.universalResolverUrl}/${this.universalResolverPath}/${did}`,
-          {
-            headers: {
-              'Accept': accept,
+          )
+        : await axios.get(
+            `${this.universalResolverUrl}/${this.universalResolverPath}/${did}`,
+            {
+              headers: {
+                Accept: accept,
+              },
             },
-          },
-        );
+          );
 
       return {
         content: response.headers['content-type'],

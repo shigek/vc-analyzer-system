@@ -21,9 +21,22 @@ import { SubjectDidDeleteDto } from '../dto/subject-did-delete';
 import { storage } from '@share/share/common/strage/storage';
 import { CredentialSubject } from '../interfaces/trusted-vc-data.interface';
 import { AuthGuard } from '@nestjs/passport';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+} from '@nestjs/swagger';
+import {
+  AddOrPutResponse,
+  DeleteResponse,
+  GetResponse,
+} from '../dto/success-response.dto';
+import { ErrorResponse } from '../dto/error-response.dto';
 
 @Controller('trusted-issuers')
 @UseFilters(AllExceptionsFilter)
+@ApiBearerAuth('gateway-jwt')
 export class ProtectedController {
   private readonly ipfsPeerUrl: string;
   private readonly serviceName: string;
@@ -44,6 +57,43 @@ export class ProtectedController {
     }
     this.serviceName = url2;
   }
+
+  @ApiOperation({
+    summary: 'Resolver DID',
+    description:
+      'このエンドポイントはDIDを解決します。入力としてDIDを受け取ります。',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'DIDの解決に成功した',
+    type: AddOrPutResponse,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'リクエストが無効',
+    type: ErrorResponse,
+  })
+  @ApiResponse({ status: 401, description: '認証エラー', type: ErrorResponse })
+  @ApiResponse({
+    status: 403,
+    description: '認証は成功したが、この操作を実行する権限がない',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'データが存在しない',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 422,
+    description: 'データの検証に失敗した',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'サーバー内部エラー',
+    type: ErrorResponse,
+  })
   @UseGuards(AuthGuard('gateway-jwt'))
   @Post()
   async hundlePostTrustedIssuers(
@@ -87,6 +137,52 @@ export class ProtectedController {
     };
     return res.status(201).send(finalResponse);
   }
+
+  @ApiOperation({
+    summary: 'Resolver DID',
+    description:
+      'このエンドポイントはDIDを解決します。入力としてDIDを受け取ります。',
+  })
+  @ApiParam({
+    name: 'subjectDid',
+    description: '解決するDIDを指定する',
+    example: 'urn:d8290d62-813d-44a9-98d3-fd27c85f729b',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'DIDの解決に成功した',
+    type: AddOrPutResponse,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'リクエストが無効',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 401,
+    description: '認証エラー',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 403,
+    description: '認証は成功したが、この操作を実行する権限がない',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'データが存在しない',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 422,
+    description: 'データの検証に失敗した',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'サーバー内部エラー',
+    type: ErrorResponse,
+  })
   @UseGuards(AuthGuard('gateway-jwt'))
   @Put(':subjectDid')
   async hundlePutTrustedIssuers(
@@ -150,6 +246,52 @@ export class ProtectedController {
     };
     return res.send(finalResponse);
   }
+
+  @ApiOperation({
+    summary: 'Resolver DID',
+    description:
+      'このエンドポイントはDIDを解決します。入力としてDIDを受け取ります。',
+  })
+  @ApiParam({
+    name: 'subjectDid',
+    description: '解決するDIDを指定する',
+    example: 'urn:d8290d62-813d-44a9-98d3-fd27c85f729b',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'DIDの解決に成功した',
+    type: DeleteResponse,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'リクエストが無効',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 401,
+    description: '認証エラー',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 403,
+    description: '認証は成功したが、この操作を実行する権限がない',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'データが存在しない',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 422,
+    description: 'データの検証に失敗した',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'サーバー内部エラー',
+    type: ErrorResponse,
+  })
   @UseGuards(AuthGuard('gateway-jwt'))
   @Delete()
   async hundleDeleteTrustedIssuers(

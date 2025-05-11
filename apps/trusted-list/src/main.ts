@@ -13,8 +13,7 @@ async function bootstrap() {
     new ValidationPipe({
       transform: true,
       whitelist: true,
-      forbidNonWhitelisted: true,
-      // disableErrorMessages: true, // 本番環境では true にすることも
+      forbidNonWhitelisted: true, // @@@ 本番環境では true にすることも
 
       exceptionFactory: (errors: ValidationError[]) => {
         return new HttpException(

@@ -46,7 +46,7 @@ export class TrustedListsRequesterService {
   ): Promise<any> {
     try {
       const response = await axios.put(
-        `${this.trustedListUrl}/trasted-issuers/${subjectDid}`,
+        `${this.trustedListUrl}/trusted-issuers/${subjectDid}`,
         createDao,
         {
           headers: {
@@ -68,14 +68,13 @@ export class TrustedListsRequesterService {
     }
   }
   async deleteTrustedList(
-    subjectDid: string,
     createDao: any,
     accessToken: string,
     correlationId: string,
   ): Promise<any> {
     try {
       const response = await axios.delete(
-        `${this.trustedListUrl}/trasted-issuers/${subjectDid}`,
+        `${this.trustedListUrl}/trusted-issuers`,
         {
           headers: {
             'X-Correlation-ID': correlationId,
@@ -91,7 +90,7 @@ export class TrustedListsRequesterService {
       throw getAxionResponse(
         error,
         'Trusted list',
-        [subjectDid],
+        [createDao.subjectDid],
         correlationId,
       );
     }

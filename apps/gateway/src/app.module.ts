@@ -13,6 +13,8 @@ import { AuthModule } from './auth/auth.module';
 import { VerifiersRequesterService } from './services/verifier/verifiers-requester.service';
 import { TrustedListsRequesterService } from './services/manager/trusted-list/trusted-list-requester.service';
 import { StatusListsRequesterService } from './services/manager/status-list/status-list-requester.service';
+import { randomUUID } from 'crypto';
+import { storage } from '@share/share/common/strage/storage';
 
 @Module({
   imports: [
@@ -34,4 +36,19 @@ import { StatusListsRequesterService } from './services/manager/status-list/stat
     StatusListsRequesterService,
   ],
 })
-export class AppModule {}
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply((req: any, _res: Response, next: () => void) => {
+        // リクエストIDの追加
+        req.startTime = process.hrtime();
+        if (!req.header('X-Correlation-ID')) {
+          req.correlationId = randomUUID();
+        } else {
+          req.correlationId = req.header('X-Correlation-ID');
+        }
+        storage.run(req, () => next());
+      })
+      .forRoutes('*');
+  }
+}

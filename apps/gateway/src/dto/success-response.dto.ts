@@ -1,5 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { AxiosError } from 'axios';
+
+export class SuccessServiceResponse {
+  @ApiProperty({ description: 'ペイロード', additionalProperties: {} })
+  payload: object;
+  @ApiProperty({ description: 'サービスメタ情報', additionalProperties: {} })
+  serviceMetadata: object;
+}
 export class SuccessResponse {
   @ApiProperty({ description: 'エラーメッセージ' })
   message: string;

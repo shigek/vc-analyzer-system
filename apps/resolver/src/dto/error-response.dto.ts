@@ -1,12 +1,38 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { AxiosError } from 'axios';
+
+export class ServiceMetadata {
+  @ApiProperty({ description: 'エラーメッセージ' })
+  serviceName: string;
+  @ApiProperty({ description: 'エラーコード' })
+  version: string;
+  @ApiProperty({ required: false, description: 'エラー詳細' })
+  timestamp: string;
+  @ApiProperty({ description: '処理識別子' })
+  processingTimeMillis: string;
+  @ApiProperty({ description: '処理識別子' })
+  correlationId: string;
+}
+export class ServiceErrorMainResponse {
+  @ApiProperty({ description: 'エラーメッセージ' })
+  message: string;
+  @ApiProperty({ description: 'エラーコード' })
+  code: string;
+  @ApiProperty({ required: false, description: 'エラー詳細', isArray: true })
+  details: object;
+}
+export class ServiceErrorResponse {
+  @ApiProperty({ description: 'サービスエラー' })
+  error: ServiceErrorMainResponse;
+  @ApiProperty({ required: false, description: 'サービスメタ情報' })
+  serviceMetadata: ServiceMetadata;
+}
 export class ErrorResponse {
   @ApiProperty({ description: 'エラーメッセージ' })
   message: string;
   @ApiProperty({ description: 'エラーコード' })
   code: string;
   @ApiProperty({ required: false, description: 'エラー詳細' })
-  details?: AxiosError['message'];
+  details?: object;
   @ApiProperty({ description: '処理識別子' })
   correlationId: string;
 }

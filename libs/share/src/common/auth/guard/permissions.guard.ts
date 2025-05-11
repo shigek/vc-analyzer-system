@@ -43,7 +43,7 @@ export class PermissionsGuard implements CanActivate {
         'Permissions denied: User information or permissions not available.',
       );
     }
-
+    console.log(requiredPermissions);
     // ユーザーが持っている権限（user.permissions）が、エンドポイントが必要とする権限（requiredPermissions）を全て含んでいるかチェック
     const hasRequiredPermissions = requiredPermissions.every((permission) =>
       user.permissions.includes(permission),

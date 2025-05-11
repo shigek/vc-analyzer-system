@@ -15,7 +15,6 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
       // disableErrorMessages: true, // 本番環境では true にすることも
-
       exceptionFactory: (errors: ValidationError[]) => {
         return new HttpException(
           {

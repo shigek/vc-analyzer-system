@@ -29,17 +29,25 @@ export class VerifiersRequesterService {
     }
     this.trustedListUrl = url2;
   }
-  async getDidDocument(did: string, correlationId: string): Promise<any> {
+  async getDidDocument(
+    did: string,
+    accept: string,
+    correlationId: string,
+  ): Promise<any> {
     try {
-      const response = await axios.get(
-        `${this.didResolverUrl}/resolve/${did}`,
-        {
-          headers: {
-            'X-Correlation-ID': correlationId,
-            'Content-Type': 'application/json',
-          },
-        },
-      );
+      const response = !accept
+        ? await axios.get(`${this.didResolverUrl}/resolve/${did}`, {
+            headers: {
+              'X-Correlation-ID': correlationId,
+              Accept: 'application/json',
+            },
+          })
+        : await axios.get(`${this.didResolverUrl}/resolve/${did}`, {
+            headers: {
+              'X-Correlation-ID': correlationId,
+              Accept: accept,
+            },
+          });
       return response.data;
     } catch (error) {
       this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD);

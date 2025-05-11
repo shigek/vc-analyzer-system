@@ -9,13 +9,13 @@ import { ConfigService } from '@nestjs/config';
 import {
   StatusListData,
   StatusListVerifableCredential,
-} from './interfaces/status-list-data.interface';
+} from '../interfaces/status-list-data.interface';
 import { replaceBit, searchBit } from '@share/share';
 import {
   setDocumentLoader,
   signedCredential,
-} from './utils/signed-status-list-vc';
-import { transferStatusListDatafromVc } from './utils/transfer-status-list-data-from-vc';
+} from '../utils/signed-status-list-vc';
+import { transferStatusListDatafromVc } from '../utils/transfer-status-list-data-from-vc';
 import path from 'path';
 import { loadRegistry, saveRegistry } from '@share/share';
 import { IpfsAccessor } from '@share/share/utils/ipfs-data-accessor';
@@ -294,7 +294,10 @@ export class StatusListService implements OnApplicationBootstrap {
     const errors: VerificationErrorDetails[] = [];
     try {
       // 作られたデータがおかしい場合は、例外をスローする
-      const statusListData = transferStatusListDatafromVc(credential, 1000);
+      const statusListData = await transferStatusListDatafromVc(
+        credential,
+        1000,
+      );
       if (index < 0 || index >= statusListData.bitLength) {
         this.logger.error(
           `index ${index} is out of bounds for bitlength ${statusListData.bitLength}`,
@@ -346,14 +349,17 @@ export class StatusListService implements OnApplicationBootstrap {
     }
   }
 
-  changeStatus(
+  async changeStatus(
     index: number,
     status: string,
     credential: StatusListVerifableCredential,
-  ): StatusListData {
+  ): Promise<StatusListData> {
     const errors: RegistrationErrorDetails[] = [];
     try {
-      const statusListData = transferStatusListDatafromVc(credential, 1000);
+      const statusListData = await transferStatusListDatafromVc(
+        credential,
+        1000,
+      );
       if (index < 0 || index >= statusListData.bitLength) {
         errors.push({
           message: `Status list update client error (revoke or valid): ${status}`,

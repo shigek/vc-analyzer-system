@@ -4,6 +4,7 @@ import { securityLoader } from '@digitalcredentials/security-document-loader';
 import { issue } from '@share/share/utils/jsonld-signer';
 import { randomUUID } from 'crypto';
 import { KeyFileDataLoader } from '@share/share/common/key/provider.key';
+import { compress } from '@share/share/utils/gzip.utils';
 export async function signedCredential(
   listData: {
     id: string;
@@ -15,7 +16,9 @@ export async function signedCredential(
   keyfileLoader: KeyFileDataLoader,
   documentLoader: any,
 ): Promise<StatusListVerifableCredential> {
-  const encodedListBitstring = listData.bitstring.toString('base64url');
+  // 1. gizで圧縮する。
+  const compressed = await compress(listData.bitstring);
+  const encodedListBitstring = compressed.toString('base64url');
   const credential = {
     '@context': [
       'https://www.w3.org/2018/credentials/v1',

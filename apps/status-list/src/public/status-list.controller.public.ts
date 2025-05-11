@@ -1,37 +1,37 @@
 import { Controller, Get, Param, Res, UseFilters } from '@nestjs/common';
-import { TrustedListService } from '../services/trusted-list.service';
+import { StatusListService } from '../services/status-list.service';
 import { Response } from 'express';
-import { CommonResponse } from '@share/share/interfaces/response/common-response.interface';
-import { ConfigService } from '@nestjs/config';
 import { AllExceptionsFilter } from '@share/share/common/filters/all-exceptions.filter';
 import { storage } from '@share/share/common/strage/storage';
+import { ConfigService } from '@nestjs/config';
+import { CommonResponse } from '@share/share/interfaces/response/common-response.interface';
 import { ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
-import { GetResponse } from '../dto/success-response.dto';
 import { ErrorResponse } from '../dto/error-response.dto';
+import { GetOrPutResponse } from '../dto/success-response.dto';
 
-@Controller('trusted-issuers')
+@Controller()
 @UseFilters(AllExceptionsFilter)
-export class PublicController {
+export class PublicStatusListController {
   private readonly ipfsPeerUrl: string;
   private readonly serviceName: string;
   constructor(
     private configService: ConfigService,
-    private readonly trustedListService: TrustedListService,
+    private readonly statusListService: StatusListService,
   ) {
-    const url1 = this.configService.get<string>('IPFS_PEER_PUBLIC_URL');
+    const url1 = this.configService.get<string>('STATUS_LIST_SERVICE_NAME');
     if (!url1) {
-      throw new Error('IPFS_PEER_PUBLIC_URL environment variable is not set.');
-    }
-    this.ipfsPeerUrl = url1;
-    const url2 = this.configService.get<string>('TRUSTED_LIST_SERVICE_NAME');
-    if (!url2) {
       throw new Error(
-        'TRUSTED_LIST_SERVICE_NAME environment variable is not set.',
+        'STATUS_LIST_SERVICE_NAME environment variable is not set.',
       );
     }
-    this.serviceName = url2;
+    this.serviceName = url1;
+    const url2 = this.configService.get<string>('IPFS_PEER_PUBLIC_URL');
+    if (!url2) {
+      throw new Error('IPFS_PEER_PUBLIC_URL environment variable is not set.');
+    }
+    this.ipfsPeerUrl = url2;
   }
-
+  @Get('status-checks/:listId/:index')
   @ApiOperation({
     summary: 'Resolver DID',
     description:
@@ -50,7 +50,7 @@ export class PublicController {
   @ApiResponse({
     status: 200,
     description: 'DIDの解決に成功した',
-    type: GetResponse,
+    type: GetOrPutResponse,
   })
   @ApiResponse({
     status: 400,
@@ -72,30 +72,31 @@ export class PublicController {
     description: 'サーバー内部エラー',
     type: ErrorResponse,
   })
-  @Get(':subjectDid')
-  async hundleTrustedIssuers(
-    @Param('subjectDid') subjectDid: string,
+  async handleStatusCheks(
+    @Param('listId') listId: string,
+    @Param('index') index: number,
     @Res() res: Response,
   ): Promise<any> {
     const request = storage.getStore() as any;
-
     //1.ファイル読み込む
-    const { credential, currentTrustedListCid } =
-      await this.trustedListService.readIpfsData(subjectDid);
+    const { credential, currentStatusListCid } =
+      await this.statusListService.readIpfsData(listId);
+    //2 署名検証と、listIdのチェック
+    await this.statusListService.verifyProofAndId(listId, credential);
 
-    //3.署名検証と、subjectDidのチェック
-    await this.trustedListService.verifyProofAndId(subjectDid, credential);
-
-    //4.credentialSubjectの検証
-    const { validUntil, status } =
-      await this.trustedListService.verifyCredentialSubject(credential);
-
+    //3 ステータスをチェックする。
+    const { status, statusCode } = await this.statusListService.verifyStatus(
+      index,
+      credential,
+    );
     const endTime = process.hrtime(request.startTime);
     const processingTimeMillis = (endTime[0] * 1e9 + endTime[1]) / 1e6;
     const responsePayload = {
-      trustedIssuer: subjectDid,
-      status: status,
-      validUntil: validUntil,
+      statusIssuer: {
+        listId,
+        index,
+      },
+      status,
     };
     const finalResponse: CommonResponse<typeof responsePayload> = {
       payload: responsePayload,
@@ -105,7 +106,7 @@ export class PublicController {
         timestamp: new Date().toISOString(),
         processingTimeMillis,
         ipfsGatewayUrl: this.ipfsPeerUrl,
-        fetchedCid: currentTrustedListCid,
+        fetchedCid: currentStatusListCid,
       },
     };
     return res.send(finalResponse);

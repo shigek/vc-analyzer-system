@@ -19,8 +19,8 @@ import {
 import {
   ErrorResponse,
   ExternalServiceErrorResponse,
-} from '@share/share/dto/error-response.dto';
-import { ResolverSuccessResponse } from '@share/share/dto/success-response.dto';
+} from './dto/error-response.dto';
+import { ResolverSuccessResponse } from './dto/success-response.dto';
 
 @Controller('resolve')
 export class ResolverController {
@@ -62,8 +62,7 @@ export class ResolverController {
       },
       'application/ld+json;profile="https://w3id.org/did-resolution"': {
         value: 'application/ld+json;profile="https://w3id.org/did-resolution"',
-        description:
-          'DID解決結果のメディアタイプ (JSON-LD).',
+        description: 'DID解決結果のメディアタイプ (JSON-LD).',
       },
     },
     required: false,
@@ -115,7 +114,6 @@ export class ResolverController {
   ): Promise<any> {
     const request = storage.getStore() as any;
     try {
-      console.log(accept);
       const { content, didDocument } =
         await this.resolverService.getDidDocumentFromUniversalResolver(
           did,
@@ -135,6 +133,7 @@ export class ResolverController {
             version: '0.0.1',
             timestamp: new Date().toISOString(),
             processingTimeMillis,
+            correlationId: request.correlationId,
           },
         };
         throw new HttpException(finalErrorResponse, error.getStatus());

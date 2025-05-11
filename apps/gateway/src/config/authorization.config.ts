@@ -1,5 +1,3 @@
-// Gateway 側の設定（例: config/authorization.config.ts）
-
 export const clientPermissionsMapping = {
   'trusted-issuer-service': {
     'trusted-list:manage': [
@@ -34,6 +32,5 @@ export function getClientPermissions(
   if (permissions.length === 0) {
     throw new Error('scoope not set.');
   }
-  console.log(permissions[0]);
   return permissions[0];
 }
