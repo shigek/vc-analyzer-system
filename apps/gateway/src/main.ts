@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { dump } from 'js-yaml';
 import fs from 'fs';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: true });
@@ -22,7 +23,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   fs.writeFileSync('./swagger-gateway-spec.yaml', dump(document, {}));
   SwaggerModule.setup('api', app, document); // '/api' というパスで Swagger UI を有効にする
-
+  app.use(helmet());
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

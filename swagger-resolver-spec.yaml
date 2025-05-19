@@ -77,25 +77,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: データが存在しない
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+                $ref: '#/components/schemas/ErrorResponse'
         '406':
           description: サポートされていない表現です。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+                $ref: '#/components/schemas/ErrorResponse'
         '410':
           description: 正常に解決されましたが、DIDは無効化されています。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: サーバー内部エラー
           content:
@@ -107,7 +107,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ExternalServiceErrorResponse'
+                $ref: '#/components/schemas/ErrorResponse'
       summary: Resolver DID
       tags:
         - Resolver
@@ -120,61 +120,59 @@ tags: []
 servers: []
 components:
   schemas:
-    ResolverErrorResponse:
+    ErrorServiceMetadata:
       type: object
       properties:
-        didDocument:
-          type: object
-          description: DIDドキュメント（JSON表現）
-        didResolutionMetadata:
-          type: object
-          description: DID 解決メタデータ
-          additionalProperties: {}
-        didDocumentMetadata:
-          type: object
-          description: DID 共通メタデータ
-          additionalProperties: {}
-      required:
-        - didDocument
-        - didResolutionMetadata
-        - didDocumentMetadata
-    ExternalServiceErrorResponse:
-      type: object
-      properties:
-        message:
+        serviceName:
           type: string
-          description: エラーメッセージ
-        code:
+          description: サービス名
+        version:
           type: string
-          description: エラーコード
-        serviceError:
-          description: 外部サービス連携エラー情報
-          allOf:
-            - $ref: '#/components/schemas/ResolverErrorResponse'
+          description: サービスバージョン
+        timestamp:
+          type: string
+          description: 応答時間
+        processingTimeMillis:
+          type: number
+          description: 処理時間
         correlationId:
           type: string
           description: 処理識別子
       required:
-        - message
-        - code
-        - serviceError
+        - serviceName
+        - version
+        - timestamp
+        - processingTimeMillis
         - correlationId
+    ErrorMainResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          description: エラーコード
+        message:
+          type: string
+          description: エラーメッセージ
+        details:
+          description: エラー詳細
+          type: array
+          items:
+            type: object
+      required:
+        - code
+        - message
+        - details
     ErrorResponse:
       type: object
       properties:
-        message:
-          type: string
-          description: エラーメッセージ
-        code:
-          type: string
-          description: エラーコード
-        details:
-          type: object
-          description: エラー詳細
-        correlationId:
-          type: string
-          description: 処理識別子
+        serviceMetadata:
+          description: サービスメタ情報
+          allOf:
+            - $ref: '#/components/schemas/ErrorServiceMetadata'
+        error:
+          description: エラー情報
+          allOf:
+            - $ref: '#/components/schemas/ErrorMainResponse'
       required:
-        - message
-        - code
-        - correlationId
+        - serviceMetadata
+        - error

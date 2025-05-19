@@ -10,6 +10,33 @@
   "monorepo": true,
   "root": "apps/gateway",
   "projects": {
+    "httpclient": {
+      "type": "library",
+      "root": "libs/httpclient",
+      "entryFile": "index",
+      "sourceRoot": "libs/httpclient/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/httpclient/tsconfig.lib.json"
+      }
+    },
+    "metadata": {
+      "type": "library",
+      "root": "libs/metadata",
+      "entryFile": "index",
+      "sourceRoot": "libs/metadata/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/metadata/tsconfig.lib.json"
+      }
+    },
+    "persistence": {
+      "type": "library",
+      "root": "libs/persistence",
+      "entryFile": "index",
+      "sourceRoot": "libs/persistence/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/persistence/tsconfig.lib.json"
+      }
+    },
     "resolver": {
       "type": "application",
       "root": "apps/resolver",

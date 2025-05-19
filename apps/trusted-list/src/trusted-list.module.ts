@@ -1,17 +1,22 @@
 import { MiddlewareConsumer, Module } from '@nestjs/common';
-import { PublicController } from './public/public.controller';
-import { ProtectedController } from './protected/protected.controller';
-import { TrustedListService } from './services/trusted-list.service';
+import { TrustedListService } from './trusted-list.service';
 import { ConfigModule } from '@nestjs/config';
-import { ShareModule } from '@share/share/share.module';
+import { ShareModule } from 'lib/share/share.module';
 import type { Response } from 'express';
 import { randomUUID } from 'crypto';
-import { storage } from '@share/share/common/strage/storage';
-import { AuthModule } from '@share/share/common/auth/auth.module';
+import { storage } from 'lib/share/common/strage/storage';
+import { AuthModule } from 'lib/share/common/auth/auth.module';
+import { PersistenceModule } from 'lib/persistence';
+import { TrustedListController } from './trusted-list.controller';
 
 @Module({
-  imports: [AuthModule, ShareModule, ConfigModule.forRoot({ isGlobal: true })],
-  controllers: [PublicController, ProtectedController],
+  imports: [
+    PersistenceModule,
+    AuthModule,
+    ShareModule,
+    ConfigModule.forRoot({ isGlobal: true }),
+  ],
+  controllers: [TrustedListController],
   providers: [TrustedListService],
 })
 export class TrustedListModule {

@@ -2,7 +2,7 @@ import {
   StatusListData,
   StatusListVerifableCredential,
 } from '../interfaces/status-list-data.interface';
-import { decompress } from '@share/share/utils/gzip.utils';
+import { decompress } from 'lib/share/utils/gzip.utils';
 export async function transferStatusListDatafromVc(
   credential: StatusListVerifableCredential,
   byteSize: number,

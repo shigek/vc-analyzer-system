@@ -4,6 +4,6 @@ export class StatusListUpdateDto {
   @ApiProperty({ example: 'revoked' })
   @IsString()
   @IsNotEmpty()
-  @IsIn(['revoked'])
+  @IsIn(['revoked', 'suspended'])
   status: string;
 }

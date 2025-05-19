@@ -1,6 +1,4 @@
-import { ServiceMetadata } from './serviceMetadata.interface';
-
-export interface CommonResponse<T> {
-  payload: T;
-  serviceMetadata: ServiceMetadata;
+export interface CommonResponse<P, M> {
+  payload: P;
+  serviceMetadata: M;
 }

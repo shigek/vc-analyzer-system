@@ -1,8 +1,8 @@
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
-import { getAxionResponse } from '@share/share/common/axios/error-handler.axios';
-import { ERROR_MESSAGES } from '@share/share/common/message/common-message';
+import { ERROR_MESSAGES } from 'lib/share/common/message/common-message';
+import { getAxionResponse } from 'lib/httpclient/error/error-handler.axios';
 
 @Injectable()
 export class ResolverService {
@@ -29,7 +29,6 @@ export class ResolverService {
   async getDidDocumentFromUniversalResolver(
     did: string,
     accept: string,
-    correlationId: string,
   ): Promise<any> {
     try {
       const response = !accept
@@ -56,8 +55,8 @@ export class ResolverService {
       };
     } catch (e) {
       this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD);
-      const error = getAxionResponse(e, 'DID Resolver', [did], correlationId);
-      throw new HttpException(error.response, error.status);
+      const error = getAxionResponse(e, 'DID Resolver', [did]);
+      throw error;
     }
   }
 }

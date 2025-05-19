@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDidFormat } from '@share/share/common/helpers/validator/custom-validator';
+import { IsDidFormat } from 'lib/share/common/helpers/validator/custom-validator';
 import { IsNotEmpty, IsString } from 'class-validator';
 export class SubjectDidDeleteDto {
   @ApiProperty({

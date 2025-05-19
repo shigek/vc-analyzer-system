@@ -20,12 +20,30 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "@share/share": [
+      "lib/share": [
         "libs/share/src"
       ],
-      "@share/share/*": [
+      "lib/share/*": [
         "libs/share/src/*"
-      ]
+      ],
+      "lib/httpclient": [
+        "libs/httpclient/src"
+      ],
+      "lib/httpclient/*": [
+        "libs/httpclient/src/*"
+      ],
+      "lib/metadata": [
+        "libs/metadata/src"
+      ],
+      "lib/metadata/*": [
+        "libs/metadata/src/*"
+      ],
+      "lib/persistence": [
+        "libs/persistence/src"
+      ],
+      "lib/persistence/*": [
+        "libs/persistence/src/*"
+      ],
     }
   }
 }

@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { TrustedListModule } from './trusted-list.module';
-import { CustomLogger } from '@share/share/common/logger/custom-logger';
+import { CustomLogger } from 'lib/share/common/logger/custom-logger';
 import { HttpException, HttpStatus, ValidationPipe } from '@nestjs/common';
 import { ValidationError } from 'class-validator';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -26,7 +26,7 @@ async function bootstrap() {
       },
     }),
   );
-  app.useLogger(new CustomLogger());
+  // app.useLogger(new CustomLogger());
   const config = new DocumentBuilder()
     .setTitle('VC Analyzer System Trusted List API') // API のタイトル
     .setDescription(

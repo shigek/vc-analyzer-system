@@ -11,6 +11,7 @@ export interface JwtPayload {
   sub: string; // 通常、サブジェクト（JWTの対象）。Client Credentialsの場合、クライアントIDなど
   clientId: string; // クライアントIDをカスタムクレームとして含む場合
   scopes: string[];
+  scope: string;
   // ... その他のペイロード情報 ...
 }
 const PUBLIC_KEY_FILE_PATH = path.join(
@@ -29,7 +30,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), // リクエストヘッダーからBearerトークンとしてJWTを抽出
-      ignoreExpiration: true, // @@@@@ JWTの有効期限切れをチェックする（通常はtrue）
+      ignoreExpiration:
+        configService.getOrThrow<string>('IGNORE_EXPIRATION') === 'true'
+          ? true
+          : false, // @@@@@JWTの有効期限切れをチェックする（通常はfalse）
       secretOrKey: fs.readFileSync(PUBLIC_KEY_FILE_PATH, 'utf8'),
       algorithms: ['RS256'],
     });
@@ -39,7 +43,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   // JWT検証後（署名検証、有効期限チェックなどがPassportにより自動で行われる）に呼び出されるメソッド
   // payload には JWT のデコードされた内容が入ります。
   async validate(payload: JwtPayload): Promise<any> {
-    console.log('Validate called');
     // ★★★ ここでペイロードの内容を検証 ★★★
     // Client Credentials フローの場合、ペイロードにクライアントIDなどが含まれているはずです。
     // そのクライアントIDが有効な運営主体のクライアントであるかなどをチェックします。
@@ -53,7 +56,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // 検証が成功した場合、validate メソッドは「認証されたユーザー（またはクライアント）」を表す値を返します。
     // この返り値は、後でコントローラーの @Req() user や @GetUser() デコレータでアクセスできるようになります。
     // Client Credentials の場合、返り値はクライアントの情報（クライアントIDなど）にすると良いでしょう。
-    return { clientId: payload.sub, scopes: payload.scopes }; // 例: クライアントIDを返す
+    const scopes =
+      payload.scope && payload.scope.length !== 0
+        ? payload.scope.split(',')
+        : [];
+    return { clientId: payload.sub, scopes: scopes }; // 例: クライアントIDを返す
     // return payload.sub; // sub をそのまま返す場合
   }
 }

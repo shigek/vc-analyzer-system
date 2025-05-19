@@ -1,357 +1,26 @@
 openapi: 3.0.0
 paths:
-  /:
+  /analyzer-gateway:
     get:
-      operationId: AppController_haldleHello
+      operationId: ExternalApiController_haldleHello
       parameters: []
       responses:
         '200':
           description: ''
-      tags:
-        - Root
-  /contexts/trusted-list/v1:
+      tags: &ref_0
+        - ExternalApiService
+  /analyzer-gateway/contexts/trusted-list/v1:
     get:
-      operationId: ContextController_handleContextLoader
+      operationId: ExternalApiController_handleContextLoader
       parameters: []
       responses:
         '200':
           description: ''
-      tags:
-        - Context
-  /manager/status-lists/register:
-    post:
-      operationId: PrivateAnalyzerController_handleAddStatusList
-      parameters:
-        - name: X-Correlation-ID
-          in: header
-          description: 処理識別子
-          required: false
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/StatusListCreateDto'
-      responses:
-        '201':
-          description: Status listの登録が正常終了した
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AddResponse'
-        '400':
-          description: リクエストが無効
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: 認証エラー
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '403':
-          description: 認証は成功したが、この操作を実行する権限がない
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: データが存在しない
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '422':
-          description: VCデータの検証に失敗した
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: サーバー内部エラー
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-      security: &ref_0
-        - jwt: []
-      tags: &ref_1
-        - manager
-  /manager/status-lists/{listId}/entries/{index}/status:
-    put:
-      operationId: PrivateAnalyzerController_handleUpdateStatusListStatus
-      parameters:
-        - name: listId
-          required: true
-          in: path
-          description: Status list lisの識別子
-          schema:
-            type: string
-        - name: index
-          required: true
-          in: path
-          description: Status listの状態が設定されている位置情報
-          schema:
-            example: 20
-            type: number
-        - name: X-Correlation-ID
-          in: header
-          description: 処理識別子
-          required: false
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/StatusListUpdateDto'
-      responses:
-        '200':
-          description: Status listの状態更新が正常終了した
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetOrPutResponse'
-        '400':
-          description: リクエストが無効
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: 認証エラー
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '403':
-          description: 認証は成功したが、この操作を実行する権限がない
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: データが存在しない
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '422':
-          description: データの検証に失敗した
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: サーバー内部エラー
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-      security: *ref_0
-      tags: *ref_1
-  /manager/trusted-issuers:
-    post:
-      operationId: PrivateAnalyzerController_handleAddTrustedIssuer
-      parameters:
-        - name: X-Correlation-ID
-          in: header
-          description: 処理識別子
-          required: false
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SubjectDidRegistrationDto'
-      responses:
-        '201':
-          description: Trusted listの登録が正常終了した
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AddOrPutResponse'
-        '400':
-          description: リクエストが無効
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: 認証エラー
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '403':
-          description: 認証は成功したが、この操作を実行する権限がない
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: データが存在しない
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '422':
-          description: データの検証に失敗した
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: サーバー内部エラー
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-      security: *ref_0
-      tags: *ref_1
-    delete:
-      operationId: PrivateAnalyzerController_handleDeleteTrustedIssuer
-      parameters:
-        - name: subjectDid
-          required: true
-          in: path
-          description: 処理依頼者のDIDを設定する
-          schema: {}
-        - name: X-Correlation-ID
-          in: header
-          description: 処理識別子
-          required: false
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SubjectDidDeleteDto'
-      responses:
-        '200':
-          description: Trusted listの削除が正常終了した
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DeleteResponse'
-        '400':
-          description: リクエストが無効
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: 認証エラー
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '403':
-          description: 認証は成功したが、この操作を実行する権限がない
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: データが存在しない
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '422':
-          description: データの検証に失敗した
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: サーバー内部エラー
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-      security: *ref_0
-      tags: *ref_1
-  /manager/trusted-issuers/{subjectDid}:
-    put:
-      operationId: PrivateAnalyzerController_handleUpdateTrustedIssuer
-      parameters:
-        - name: subjectDid
-          required: true
-          in: path
-          description: 処理依頼者のDIDを設定する
-          schema:
-            type: string
-        - name: X-Correlation-ID
-          in: header
-          description: 処理識別子
-          required: false
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SubjectDidUpdateDto'
-      responses:
-        '200':
-          description: Trusted listの更新が正常終了した
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AddOrPutResponse'
-        '400':
-          description: リクエストが無効
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: 認証エラー
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '403':
-          description: 認証は成功したが、この操作を実行する権限がない
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: データが存在しない
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '422':
-          description: データの検証に失敗した
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: サーバー内部エラー
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-      security: *ref_0
-      tags: *ref_1
-  /verifiers/resolve/{did}:
+      tags: *ref_0
+  /analyzer-gateway/verifier/resolve/{did}:
     get:
       description: このエンドポイントはDIDを解決します。入力としてDIDを受け取ります。
-      operationId: PublicAnalyzerController_hundleGetDidDocument
+      operationId: ExternalApiController_hundleGetDidDocument
       parameters:
         - name: Accept
           required: false
@@ -375,12 +44,6 @@ paths:
           description: 解決するDIDを指定する
           schema:
             example: did:key:z6MknCCLeeHBUaHu4aHSVLDCYQW9gjVJ7a63FpMvtuVMy53T
-            type: string
-        - name: X-Correlation-ID
-          in: header
-          description: 処理識別子
-          required: false
-          schema:
             type: string
       responses:
         '200':
@@ -456,19 +119,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-      summary: Resolver DID
-      tags: &ref_2
-        - verifiers
-  /verifiers/status-checks/{listId}/{index}:
+      summary: Resolver Serviceへリクエストを中継する
+      tags: *ref_0
+  /analyzer-gateway/verifier/status-lists/{listId}/status/{index}:
     get:
-      operationId: PublicAnalyzerController_hundleGetStatus
+      operationId: ExternalApiController_hundleGetStatus
       parameters:
-        - name: X-Correlation-ID
-          required: false
-          in: header
-          description: 処理識別子
-          schema:
-            type: string
         - name: listId
           required: true
           in: path
@@ -487,7 +143,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetOrPutResponse'
+                $ref: '#/components/schemas/StatusListSuccessResponse'
         '400':
           description: リクエストが無効
           content:
@@ -513,17 +169,144 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
       summary: Status listの状態を取得する
-      tags: *ref_2
-  /verifiers/trusted-issuers/{did}:
-    get:
-      operationId: PublicAnalyzerController_handleTrustedIssuer
+      tags: *ref_0
+  /analyzer-gateway/manager/status-lists:
+    post:
+      operationId: ExternalApiController_handleCreateStatus
       parameters:
         - name: X-Correlation-ID
-          required: false
           in: header
           description: 処理識別子
+          required: false
           schema:
             type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusListCreateDto'
+      responses:
+        '201':
+          description: Status listの登録が正常終了した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusListSuccessResponse'
+        '400':
+          description: リクエストが無効
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 認証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 認証は成功したが、この操作を実行する権限がない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: データが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: VCデータの検証に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      tags: *ref_0
+  /analyzer-gateway/manager/status-lists/{listId}/status/{index}:
+    patch:
+      operationId: ExternalApiController_handleUpdateStatus
+      parameters:
+        - name: listId
+          required: true
+          in: path
+          description: Status list lisの識別子
+          schema:
+            type: string
+        - name: index
+          required: true
+          in: path
+          description: Status listの状態が設定されている位置情報
+          schema:
+            example: 20
+            type: number
+        - name: X-Correlation-ID
+          in: header
+          description: 処理識別子
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusListUpdateDto'
+      responses:
+        '200':
+          description: Status listの状態更新が正常終了した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusListSuccessResponse'
+        '400':
+          description: リクエストが無効
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 認証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 認証は成功したが、この操作を実行する権限がない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: データが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: データの検証に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      tags: *ref_0
+  /analyzer-gateway/verifier/trusted-issuers/{did}:
+    get:
+      operationId: ExternalApiController_handleGetIssuer
+      parameters:
         - name: did
           required: true
           in: path
@@ -532,11 +315,11 @@ paths:
             type: string
       responses:
         '200':
-          description: Status listの状態取得が正常に終了した
+          description: Trusted listの状態取得が正常に終了した
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetResponse'
+                $ref: '#/components/schemas/TrustedListSuccessResponse'
         '400':
           description: リクエストが無効
           content:
@@ -562,7 +345,246 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
       summary: Trusted listの状態を取得する
-      tags: *ref_2
+      tags: *ref_0
+  /analyzer-gateway/admin/trusted-issuers:
+    get:
+      operationId: ExternalApiController_handleGetIssuers
+      parameters:
+        - name: X-Correlation-ID
+          in: header
+          description: 処理識別子
+          required: false
+          schema:
+            type: string
+      responses:
+        '202':
+          description: Trusted listの取得が正常終了した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrustedListSuccessResponse'
+        '400':
+          description: リクエストが無効
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 認証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 認証は成功したが、この操作を実行する権限がない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: データが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: データの検証に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      tags: *ref_0
+  /analyzer-gateway/manager/trusted-issuers:
+    post:
+      operationId: ExternalApiController_handleCreateIssuer
+      parameters:
+        - name: X-Correlation-ID
+          in: header
+          description: 処理識別子
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubjectDidRegistrationDto'
+      responses:
+        '201':
+          description: Trusted listの登録が正常終了した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrustedListSuccessResponse'
+        '400':
+          description: リクエストが無効
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 認証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 認証は成功したが、この操作を実行する権限がない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: データが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: データの検証に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      tags: *ref_0
+  /analyzer-gateway/manager/trusted-issuers/{subjectDid}:
+    patch:
+      operationId: ExternalApiController_handleUpdateIssuer
+      parameters:
+        - name: subjectDid
+          required: true
+          in: path
+          description: 処理依頼者のDIDを設定する
+          schema:
+            type: string
+        - name: X-Correlation-ID
+          in: header
+          description: 処理識別子
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubjectDidUpdateDto'
+      responses:
+        '200':
+          description: Trusted listの更新が正常終了した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrustedListSuccessResponse'
+        '400':
+          description: リクエストが無効
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 認証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 認証は成功したが、この操作を実行する権限がない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: データが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: データの検証に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      tags: *ref_0
+    delete:
+      operationId: ExternalApiController_handleDeleteTrustedIssuer
+      parameters:
+        - name: subjectDid
+          required: true
+          in: path
+          description: 処理依頼者のDIDを設定する
+          schema:
+            type: string
+        - name: X-Correlation-ID
+          in: header
+          description: 処理識別子
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Trusted listの削除が正常終了した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrustedListSuccessResponse'
+        '400':
+          description: リクエストが無効
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 認証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 認証は成功したが、この操作を実行する権限がない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: データが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: データの検証に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      tags: *ref_0
 info:
   title: VC Analyzer System GateWay API
   description: API documentation for the VC Analyzer System management plane.
@@ -572,94 +594,6 @@ tags: []
 servers: []
 components:
   schemas:
-    StatusListCreateDto:
-      type: object
-      properties:
-        credentials:
-          type: number
-          example: '1000'
-      required:
-        - credentials
-    AddStatusIssuer:
-      type: object
-      properties:
-        listId:
-          type: string
-          description: リストID
-          example: urn:d8290d62-813d-44a9-98d3-fd27c85f729b
-      required:
-        - listId
-    AddPayloadLoad:
-      type: object
-      properties:
-        statusIssuer:
-          description: 発行者のステータスリスト情報
-          allOf:
-            - $ref: '#/components/schemas/AddStatusIssuer'
-        status:
-          type: string
-          description: 状態コード
-          examples:
-            - value: revoked
-              description: 失効
-            - value: valid
-              description: 正常
-      required:
-        - statusIssuer
-        - status
-    ServiceMetadata:
-      type: object
-      properties:
-        serviceName:
-          type: string
-          description: サービス名
-        version:
-          type: string
-          description: サービスバージョン
-        timestamp:
-          type: string
-          description: 応答時間
-        processingTimeMillis:
-          type: string
-          description: 処理時間
-        ipfsGatewayUrl:
-          type: string
-          description: IPFS URL
-        fetchedCid:
-          type: string
-          description: IPFS CID
-      required:
-        - serviceName
-        - version
-        - timestamp
-        - processingTimeMillis
-        - ipfsGatewayUrl
-        - fetchedCid
-    AddResponse:
-      type: object
-      properties:
-        payload:
-          description: ペイロード
-          allOf:
-            - $ref: '#/components/schemas/AddPayloadLoad'
-        serviceMetadata:
-          description: サービスメタ情報
-          allOf:
-            - $ref: '#/components/schemas/ServiceMetadata'
-      required:
-        - payload
-    ServiceError:
-      type: object
-      properties:
-        error:
-          type: object
-          description: エラーメッセージ
-        serviceMetaData:
-          type: object
-          description: サービスメタ情報
-      required:
-        - error
-        - serviceMetaData
     ErrorServiceMetadata:
       type: object
       properties:
@@ -668,12 +602,12 @@ components:
           description: サービス名
         version:
           type: string
-          description: バージョン情報
+          description: サービスバージョン
         timestamp:
           type: string
           description: 応答時間
         processingTimeMillis:
-          type: string
+          type: number
           description: 処理時間
         correlationId:
           type: string
@@ -681,168 +615,68 @@ components:
       required:
         - serviceName
         - version
+        - timestamp
         - processingTimeMillis
         - correlationId
-    ExternalServiceErrorResponse:
+    ErrorMainResponse:
       type: object
       properties:
-        message:
-          type: string
-          description: エラーメッセージ
         code:
           type: string
           description: エラーコード
-        serviceError:
-          description: 外部連携エラー情報
-          allOf:
-            - $ref: '#/components/schemas/ServiceError'
-        serviceMetaData:
-          description: サービスメタ情報
-          allOf:
-            - $ref: '#/components/schemas/ErrorServiceMetadata'
-      required:
-        - message
-        - code
-        - serviceError
-        - serviceMetaData
-    ErrorDetail:
-      type: object
-      properties:
         message:
           type: string
           description: エラーメッセージ
-        code:
-          type: string
-          description: エラーコード
-        externalServiceError:
-          description: サービス連携エラー情報
-          allOf:
-            - $ref: '#/components/schemas/ExternalServiceErrorResponse'
         details:
           description: エラー詳細
           type: array
           items:
             type: object
       required:
-        - message
         - code
-        - externalServiceError
+        - message
         - details
     ErrorResponse:
       type: object
       properties:
-        error:
-          description: エラーメッセージ
-          allOf:
-            - $ref: '#/components/schemas/ErrorDetail'
-        serviceMetaData:
+        serviceMetadata:
           description: サービスメタ情報
           allOf:
             - $ref: '#/components/schemas/ErrorServiceMetadata'
+        error:
+          description: エラー情報
+          allOf:
+            - $ref: '#/components/schemas/ErrorMainResponse'
       required:
+        - serviceMetadata
         - error
-        - serviceMetaData
-    StatusListUpdateDto:
-      type: object
-      properties:
-        status:
-          type: string
-          example: revoked
-      required:
-        - status
-    GetOrPutStatusIssuer:
+    StatusListResponse:
       type: object
       properties:
         listId:
           type: string
-          description: リストID
-          example: urn:d8290d62-813d-44a9-98d3-fd27c85f729b
+          description: 作成、更新または確認対象のリスト識別子
         index:
-          type: string
-          description: インデックス
-          example: '123'
-      required:
-        - listId
-        - index
-    GetOrPutPayloadLoad:
-      type: object
-      properties:
-        statusIssuer:
-          description: 発行者のステータスリスト情報
-          allOf:
-            - $ref: '#/components/schemas/GetOrPutStatusIssuer'
+          type: number
+          description: 確認対象のインデックス
         status:
           type: string
-          description: 状態コード
-          examples:
-            - value: revoked
-              description: 失効
-            - value: valid
-              description: 正常
-      required:
-        - statusIssuer
-        - status
-    GetOrPutResponse:
-      type: object
-      properties:
-        payload:
-          description: ペイロード
-          allOf:
-            - $ref: '#/components/schemas/GetOrPutPayloadLoad'
-        serviceMetadata:
-          description: サービスメタ情報
-          allOf:
-            - $ref: '#/components/schemas/ServiceMetadata'
-      required:
-        - payload
-    SubjectDidRegistrationDto:
-      type: object
-      properties:
-        subjectDid:
+          description: 指定インデックスの現在のステータス文字列
+        bitValue:
+          type: number
+          description: 指定インデックスの現在のビット値
+        newBitValue:
+          type: number
+          description: 更新されたインデックスのビット値
+        newStatus:
           type: string
-          example: did:key:z6Mkiq1TQyWPezBTGoqNvcq9b6azWMyn6HwQmbjo5LLpai68
-        policy:
-          type: object
-      required:
-        - subjectDid
-    AddOrPutTrustedIssuer:
-      type: object
-      properties:
-        trustedIssuer:
+          description: 更新後の新しいステータス文字列
+        message:
           type: string
-          description: 発行者のDID
-          example: did:key:z6Mkiq1TQyWPezBTGoqNvcq9b6azWMyn6HwQmbjo5LLpai68
+          description: 成功メッセージ
       required:
-        - trustedIssuer
-    AddOrPutResponse:
-      type: object
-      properties:
-        payload:
-          description: ペイロード
-          allOf:
-            - $ref: '#/components/schemas/AddOrPutTrustedIssuer'
-        serviceMetadata:
-          description: サービスメタ情報
-          allOf:
-            - $ref: '#/components/schemas/ServiceMetadata'
-      required:
-        - payload
-    SubjectDidUpdateDto:
-      type: object
-      properties:
-        validUntil:
-          type: string
-        policy:
-          type: object
-    SubjectDidDeleteDto:
-      type: object
-      properties:
-        subjectDid:
-          type: string
-          example: did:key:z6Mkiq1TQyWPezBTGoqNvcq9b6azWMyn6HwQmbjo5LLpai68
-      required:
-        - subjectDid
-    DeleteServiceMetadata:
+        - listId
+    ServiceMetadataDto:
       type: object
       properties:
         serviceName:
@@ -855,36 +689,80 @@ components:
           type: string
           description: 応答時間
         processingTimeMillis:
-          type: string
+          type: number
           description: 処理時間
+        verifableCredentialUrl:
+          type: string
+          description: IPFS URL(オプション）
+        fetchedCid:
+          type: string
+          description: IPFS CID（オプション）
+        createdCid:
+          type: string
+          description: IPFS CID（オプション）
       required:
         - serviceName
         - version
         - timestamp
         - processingTimeMillis
-    DeleteResponse:
+    StatusListSuccessResponse:
       type: object
       properties:
         payload:
           description: ペイロード
           allOf:
-            - $ref: '#/components/schemas/AddOrPutTrustedIssuer'
+            - $ref: '#/components/schemas/StatusListResponse'
         serviceMetadata:
           description: サービスメタ情報
           allOf:
-            - $ref: '#/components/schemas/DeleteServiceMetadata'
+            - $ref: '#/components/schemas/ServiceMetadataDto'
       required:
         - payload
-    GetTrustedIssuer:
+    StatusListCreateDto:
+      type: object
+      properties:
+        size:
+          type: number
+          example: '1000'
+        statusPurpose:
+          type: string
+          example: revocation
+          description: 省略時は、`revocation`
+        bits:
+          type: number
+          example: 0
+          description: >-
+            `{specName}` が "bitstring" の場合で、statusPurposeがmessageの時のみ必須 (1, 2,
+            3)。
+        bitMapping:
+          type: object
+          example: 1
+          description: '`ビット値の文字列とステータス文字列の対応マップ`'
+      required:
+        - size
+        - bitMapping
+    StatusListUpdateDto:
+      type: object
+      properties:
+        status:
+          type: string
+          example: revoked
+      required:
+        - status
+    TrustedIssuerResponse:
       type: object
       properties:
         trustedIssuer:
           type: string
-          description: 発行者のDID
+          description: 発行者のDID 削除処理以外の場合
+          example: did:key:z6Mkiq1TQyWPezBTGoqNvcq9b6azWMyn6HwQmbjo5LLpai68
+        deletedTrustedIssuer:
+          type: string
+          description: 発行者のDID 削除処理の場合
           example: did:key:z6Mkiq1TQyWPezBTGoqNvcq9b6azWMyn6HwQmbjo5LLpai68
         status:
           type: string
-          description: 状態コード
+          description: 状態コード（VC発行者の検証時以外は付加されない）
           examples:
             - value: no-trusted
               description: 信頼されていない
@@ -892,22 +770,46 @@ components:
               description: 信頼されている
         validUntil:
           type: string
-          description: 有効期限
+          description: 有効期限 (VC発行者の検証時以外は付加されない）
           example: '2025-05-10T12:01:04.828Z'
-      required:
-        - trustedIssuer
-        - status
-        - validUntil
-    GetResponse:
+        metadata:
+          type: object
+          description: メタ情報
+        message:
+          type: string
+          description: 成功メッセージ
+    TrustedListSuccessResponse:
       type: object
       properties:
         payload:
           description: ペイロード
           allOf:
-            - $ref: '#/components/schemas/GetTrustedIssuer'
+            - $ref: '#/components/schemas/TrustedIssuerResponse'
         serviceMetadata:
           description: サービスメタ情報
           allOf:
-            - $ref: '#/components/schemas/ServiceMetadata'
+            - $ref: '#/components/schemas/ServiceMetadataDto'
       required:
         - payload
+        - serviceMetadata
+    SubjectDidRegistrationDto:
+      type: object
+      properties:
+        subjectDid:
+          type: string
+          description: 登録者のDID
+          example: did:key:z6Mkiq1TQyWPezBTGoqNvcq9b6azWMyn6HwQmbjo5LLpai68
+        policy:
+          type: object
+          description: 未サポート
+      required:
+        - subjectDid
+    SubjectDidUpdateDto:
+      type: object
+      properties:
+        validUntil:
+          type: string
+          description: ISO 8601フォーマット
+          example: '2024-11-03T01:23:56.789Z'
+        policy:
+          type: object

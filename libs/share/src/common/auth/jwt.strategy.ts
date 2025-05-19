@@ -9,7 +9,7 @@ import { Request } from 'express';
 export const Permissions = {
   ISS: 'vc-analyzer-gateway',
   AUD: ['trusted-issuer-service', 'status-list-service'],
-  SUB: 'vc-analyzer-management-client',
+  SUB: 'gateway',
 };
 
 interface JwtPayload {
@@ -25,7 +25,10 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'gateway-jwt') {
   constructor(private configService: ConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), // リクエストヘッダーからBearerトークンとしてJWTを抽出
-      ignoreExpiration: true, // @@@@@JWTの有効期限切れをチェックする（通常はtrue）
+      ignoreExpiration:
+        configService.getOrThrow<string>('IGNORE_EXPIRATION') === 'true'
+          ? true
+          : false, // @@@@@JWTの有効期限切れをチェックする（通常はfalse）
       secretOrKeyProvider: secretOrKeyProvider,
       algorithms: ['RS256'],
     });
@@ -45,12 +48,11 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'gateway-jwt') {
     if (payload.iss !== Permissions.ISS) {
       throw new UnauthorizedException(); // 無効なクライアントであれば認証失敗
     }
-    if (payload.sub !== Permissions.SUB) {
+    if (Permissions.SUB !== payload.sub) {
       throw new UnauthorizedException(); // 無効なクライアントであれば認証失敗
     }
     for (const aud of payload.aud) {
       if (!Permissions.AUD.includes(aud)) {
-        console.log(payload);
         throw new UnauthorizedException(); // 無効なクライアントであれば認証失敗
       }
     }

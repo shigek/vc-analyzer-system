@@ -1,4 +1,4 @@
-import { validateDid } from '@share/share/did/did-validate';
+import { validateDid } from 'lib/share/did/did-validate';
 import {
   ValidateBy,
   ValidationArguments,

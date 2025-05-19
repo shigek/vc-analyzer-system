@@ -1,9 +1,9 @@
 openapi: 3.0.0
 paths:
-  /status-lists/register:
+  /status-lists:
     post:
-      description: このエンドポイントはDIDを解決します。入力としてDIDを受け取ります。
-      operationId: ProtectedStatusListController_hundleRegistrationStatus
+      description: このエンドポイントはステータスリストを作成します。入力としてリストのサイズを受け取ります。
+      operationId: StatusListController_hundleCreateList
       parameters: []
       requestBody:
         required: true
@@ -13,11 +13,11 @@ paths:
               $ref: '#/components/schemas/StatusListCreateDto'
       responses:
         '200':
-          description: DIDの解決に成功した
+          description: ステータスリストの作成に成功した。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AddResponse'
+                $ref: '#/components/schemas/StatusListSuccessResponse'
         '400':
           description: リクエストが無効
           content:
@@ -38,8 +38,6 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: データが存在しない
-        '422':
-          description: データの検証に失敗した
           content:
             application/json:
               schema:
@@ -50,27 +48,78 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-      security: &ref_0
+      security:
         - gateway-jwt: []
-      summary: Resolver DID
-      tags: &ref_1
-        - ProtectedStatusList
-  /status-lists/{listId}/entries/{index}/status:
-    put:
-      description: このエンドポイントはDIDを解決します。入力としてDIDを受け取ります。
-      operationId: ProtectedStatusListController_handleUpdateStatus
+      summary: ステータスリストの作成
+      tags: &ref_0
+        - Bitstring Status List
+  /status-lists/{listId}/status/{index}:
+    get:
+      description: このエンドポイントはステータスリストの状態を取得します。入力としてlistId, indexを受け取ります。
+      operationId: StatusListController_handleStatusCheks
       parameters:
         - name: listId
           required: true
           in: path
-          description: 解決するDIDを指定する
+          description: リストIDを指定する
           schema:
-            example: urn:d8290d62-813d-44a9-98d3-fd27c85f729b
+            example: d8290d62-813d-44a9-98d3-fd27c85f729b
             type: string
         - name: index
           required: true
           in: path
-          description: 解決するDIDを指定する
+          description: indexを指定する
+          schema:
+            example: '123'
+            type: number
+      responses:
+        '200':
+          description: ステータスリストの状態取得に成功した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusListSuccessResponse'
+        '400':
+          description: リクエストが無効
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: データが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 受け取った、listIdのデータは存在しているが、検証に失敗した。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      summary: ステータスリストの状態取得
+      tags: *ref_0
+    patch:
+      description: このエンドポイントはステータスをrevokedに更新します。入力としてlistId,indexを受け取ります。
+      operationId: StatusListController_handleUpdateStatus
+      parameters:
+        - name: listId
+          required: true
+          in: path
+          description: listIdを指定する
+          schema:
+            example: d8290d62-813d-44a9-98d3-fd27c85f729b
+            type: string
+        - name: index
+          required: true
+          in: path
+          description: indexを指定する
           schema:
             example: '123'
             type: number
@@ -82,11 +131,11 @@ paths:
               $ref: '#/components/schemas/StatusListUpdateDto'
       responses:
         '200':
-          description: DIDの解決に成功した
+          description: ステータスの更新に成功した
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetOrPutResponse'
+                $ref: '#/components/schemas/StatusListSuccessResponse'
         '400':
           description: リクエストが無効
           content:
@@ -112,7 +161,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '422':
-          description: データの検証に失敗した
+          description: 受け取った、listIdのデータは存在しているが、検証に失敗した。
           content:
             application/json:
               schema:
@@ -123,62 +172,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-      security: *ref_0
-      summary: Resolver DID
-      tags: *ref_1
-  /status-checks/{listId}/{index}:
-    get:
-      description: このエンドポイントはDIDを解決します。入力としてDIDを受け取ります。
-      operationId: PublicStatusListController_handleStatusCheks
-      parameters:
-        - name: listId
-          required: true
-          in: path
-          description: 解決するDIDを指定する
-          schema:
-            example: urn:d8290d62-813d-44a9-98d3-fd27c85f729b
-            type: string
-        - name: index
-          required: true
-          in: path
-          description: 解決するDIDを指定する
-          schema:
-            example: '123'
-            type: number
-      responses:
-        '200':
-          description: DIDの解決に成功した
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetOrPutResponse'
-        '400':
-          description: リクエストが無効
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: データが存在しない
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '422':
-          description: データの検証に失敗した
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: サーバー内部エラー
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-      summary: Resolver DID
-      tags:
-        - PublicStatusList
+      security:
+        - gateway-jwt: []
+      summary: ステータスの更新
+      tags: *ref_0
 info:
   title: VC Analyzer System Status List API
   description: API documentation for the VC Analyzer System management plane.
@@ -191,39 +188,53 @@ components:
     StatusListCreateDto:
       type: object
       properties:
-        credentials:
+        size:
           type: number
           example: '1000'
+        statusPurpose:
+          type: string
+          example: revocation
+          description: 省略時は、`revocation`
+        bits:
+          type: number
+          example: 0
+          description: >-
+            `{specName}` が "bitstring" の場合で、statusPurposeがmessageの時のみ必須 (1, 2,
+            3)。
+        bitMapping:
+          type: object
+          example: 1
+          description: '`ビット値の文字列とステータス文字列の対応マップ`'
       required:
-        - credentials
-    AddStatusIssuer:
+        - size
+        - bitMapping
+    StatusListResponse:
       type: object
       properties:
         listId:
           type: string
-          description: リストID
-          example: urn:d8290d62-813d-44a9-98d3-fd27c85f729b
-      required:
-        - listId
-    AddPayloadLoad:
-      type: object
-      properties:
-        statusIssuer:
-          description: 発行者のステータスリスト情報
-          allOf:
-            - $ref: '#/components/schemas/AddStatusIssuer'
+          description: 作成、更新または確認対象のリスト識別子
+        index:
+          type: number
+          description: 確認対象のインデックス
         status:
           type: string
-          description: 状態コード
-          examples:
-            - value: revoked
-              description: 失効
-            - value: valid
-              description: 正常
+          description: 指定インデックスの現在のステータス文字列
+        bitValue:
+          type: number
+          description: 指定インデックスの現在のビット値
+        newBitValue:
+          type: number
+          description: 更新されたインデックスのビット値
+        newStatus:
+          type: string
+          description: 更新後の新しいステータス文字列
+        message:
+          type: string
+          description: 成功メッセージ
       required:
-        - statusIssuer
-        - status
-    ServiceMetadata:
+        - listId
+    ServiceMetadataDto:
       type: object
       properties:
         serviceName:
@@ -236,51 +247,35 @@ components:
           type: string
           description: 応答時間
         processingTimeMillis:
-          type: string
+          type: number
           description: 処理時間
-        ipfsGatewayUrl:
+        verifableCredentialUrl:
           type: string
-          description: IPFS URL
+          description: IPFS URL(オプション）
         fetchedCid:
           type: string
-          description: IPFS CID
+          description: IPFS CID（オプション）
+        createdCid:
+          type: string
+          description: IPFS CID（オプション）
       required:
         - serviceName
         - version
         - timestamp
         - processingTimeMillis
-        - ipfsGatewayUrl
-        - fetchedCid
-    AddResponse:
+    StatusListSuccessResponse:
       type: object
       properties:
         payload:
           description: ペイロード
           allOf:
-            - $ref: '#/components/schemas/AddPayloadLoad'
+            - $ref: '#/components/schemas/StatusListResponse'
         serviceMetadata:
           description: サービスメタ情報
           allOf:
-            - $ref: '#/components/schemas/ServiceMetadata'
+            - $ref: '#/components/schemas/ServiceMetadataDto'
       required:
         - payload
-    ErrorMainResponse:
-      type: object
-      properties:
-        message:
-          type: string
-          description: エラーメッセージ
-        code:
-          type: string
-          description: エラーコード
-        details:
-          description: エラー詳細
-          type: array
-          items:
-            type: object
-      required:
-        - message
-        - code
     ErrorServiceMetadata:
       type: object
       properties:
@@ -294,7 +289,7 @@ components:
           type: string
           description: 応答時間
         processingTimeMillis:
-          type: string
+          type: number
           description: 処理時間
         correlationId:
           type: string
@@ -305,18 +300,37 @@ components:
         - timestamp
         - processingTimeMillis
         - correlationId
+    ErrorMainResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          description: エラーコード
+        message:
+          type: string
+          description: エラーメッセージ
+        details:
+          description: エラー詳細
+          type: array
+          items:
+            type: object
+      required:
+        - code
+        - message
+        - details
     ErrorResponse:
       type: object
       properties:
-        error:
-          description: サービスエラー
-          allOf:
-            - $ref: '#/components/schemas/ErrorMainResponse'
         serviceMetadata:
           description: サービスメタ情報
           allOf:
             - $ref: '#/components/schemas/ErrorServiceMetadata'
+        error:
+          description: エラー情報
+          allOf:
+            - $ref: '#/components/schemas/ErrorMainResponse'
       required:
+        - serviceMetadata
         - error
     StatusListUpdateDto:
       type: object
@@ -326,48 +340,3 @@ components:
           example: revoked
       required:
         - status
-    GetOrPutStatusIssuer:
-      type: object
-      properties:
-        listId:
-          type: string
-          description: リストID
-          example: urn:d8290d62-813d-44a9-98d3-fd27c85f729b
-        index:
-          type: string
-          description: インデックス
-          example: '123'
-      required:
-        - listId
-        - index
-    GetOrPutPayloadLoad:
-      type: object
-      properties:
-        statusIssuer:
-          description: 発行者のステータスリスト情報
-          allOf:
-            - $ref: '#/components/schemas/GetOrPutStatusIssuer'
-        status:
-          type: string
-          description: 状態コード
-          examples:
-            - value: revoked
-              description: 失効
-            - value: valid
-              description: 正常
-      required:
-        - statusIssuer
-        - status
-    GetOrPutResponse:
-      type: object
-      properties:
-        payload:
-          description: ペイロード
-          allOf:
-            - $ref: '#/components/schemas/GetOrPutPayloadLoad'
-        serviceMetadata:
-          description: サービスメタ情報
-          allOf:
-            - $ref: '#/components/schemas/ServiceMetadata'
-      required:
-        - payload

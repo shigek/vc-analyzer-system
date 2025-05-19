@@ -36,6 +36,6 @@ export function validateDid(
     return false;
   }
 
-  console.log(`Basic DID string "${didString}" seems valid.`);
+  //console.log(`Basic DID string "${didString}" seems valid.`);
   return true; // 基本的なチェックを通過
 }

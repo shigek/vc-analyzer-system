@@ -41,9 +41,19 @@ export const RESOURCE_TYPE = {
 };
 
 export const ERROR_MESSAGES = {
+  UPLOAD_ERROR: (args: ResourceArgs) =>
+    `${args.resourceType} not found with identifier: ${args.identifier}.`,
+
+  DOWNLOAD_ERROR: (args: ResourceArgs) =>
+    `${args.resourceType} not found with identifier: ${args.identifier}.`,
+
   // 例: リソースが見つからなかった場合のメッセージ関数
   RESOURCE_NOT_FOUND: (args: ResourceArgs) =>
     `${args.resourceType} not found with identifier: ${args.identifier}.`,
+
+  // 例: リソースが存在した場合場合のメッセージ関数
+  RESOURCE_ALREDY_EXISTS: (args: ResourceArgs) =>
+    `${args.resourceType} alredy exixts with identifier: ${args.identifier}.`,
 
   // 例: バリデーションエラーの詳細メッセージ関数
   VALIDATION_FAILED_DETAIL: (args: ValidationDetailArgs) =>

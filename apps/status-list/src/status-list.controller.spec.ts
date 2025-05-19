@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { StatusListController } from './public/status-list.controller.public';
+import { StatusListController } from './status-list.controller';
 import { StatusListService } from './status-list.service';
 
 describe('StatusListController', () => {

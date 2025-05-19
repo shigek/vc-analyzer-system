@@ -1,10 +1,10 @@
-import { issue } from '@share/share/utils/jsonld-signer';
+import { issue } from 'lib/share/utils/jsonld-signer';
 import { randomUUID } from 'crypto';
-import { addYear } from '@share/share';
+import { addYear } from 'lib/share';
 import { TrustedListVerifableCredential } from '../interfaces/trusted-vc-data.interface';
 import { securityLoader } from '@digitalcredentials/security-document-loader';
 import { constants, context } from 'apps/trusted-list/src/context';
-import { KeyFileDataLoader } from '@share/share/common/key/provider.key';
+import { KeyFileDataLoader } from 'lib/share/common/key/provider.key';
 
 export async function newCredentialSined(
   issuerDid: string,

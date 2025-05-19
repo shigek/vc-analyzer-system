@@ -8,12 +8,10 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import {
-  ErrorResponse,
-  ValidationErrorDetails,
-  VerificationErrorDetails,
-  RegistrationErrorDetails,
-} from '@share/share/interfaces/response/error-response.interface'; // 前に定義したErrorResponseをインポート
-import { ServiceMetadata } from '@share/share/interfaces/response/serviceMetadata.interface'; // ServiceMetadataをインポート
+  ErrorResponseInterface,
+  GeneralErrorDetails,
+} from 'lib/share/interfaces/response/error-response.interface'; // 前に定義したErrorResponseをインポート
+import { ServiceMetadata } from 'lib/share/interfaces/response/serviceMetadata.interface'; // ServiceMetadataをインポート
 
 @Catch(HttpException)
 export class AllExceptionsFilter implements ExceptionFilter<HttpException> {
@@ -26,7 +24,7 @@ export class AllExceptionsFilter implements ExceptionFilter<HttpException> {
       ? exception.getStatus()
       : HttpStatus.INTERNAL_SERVER_ERROR; // HttpException ではない場合はデフォルトで 500
     // --- ErrorResponse の内容生成 ---
-    const errorResponse: ErrorResponse = {
+    const errorResponse: ErrorResponseInterface = {
       serviceMetadata: this.generateServiceMetadata(request, status),
 
       error: {
@@ -37,11 +35,27 @@ export class AllExceptionsFilter implements ExceptionFilter<HttpException> {
         details: this.getErrorDetails(exception),
       },
     };
-    // エラーログは、ここでまとめて出力しちゃいます。
+    // @@@ エラーログは、ここでまとめて出力しちゃいます。
     response.status(status).json(errorResponse);
   }
 
-  private generateServiceMetadata(
+  protected generateServiceMetaData(
+    serviceName: string,
+    version: string,
+    request: any,
+  ): ServiceMetadata {
+    const endTime = process.hrtime(request.startTime);
+    const processingTimeMillis = (endTime[0] * 1e9 + endTime[1]) / 1e6;
+    return {
+      serviceName: serviceName,
+      version: version,
+      timestamp: new Date().toISOString(),
+      processingTimeMillis,
+      correlationId: request.correlationId,
+    };
+  }
+
+  protected generateServiceMetadata(
     request: any,
     _status: number,
   ): ServiceMetadata {
@@ -56,7 +70,7 @@ export class AllExceptionsFilter implements ExceptionFilter<HttpException> {
     };
   }
 
-  private getServiceErrorCode(exception: HttpException): string {
+  protected getServiceErrorCode(exception: HttpException): string {
     // 例外の種類に応じて、サービス独自のエラーコードを決定
     const status = exception.getStatus
       ? exception.getStatus()
@@ -73,52 +87,32 @@ export class AllExceptionsFilter implements ExceptionFilter<HttpException> {
         // ValidationPipe のエラー形式の場合
         return 'VALIDATION_ERROR';
       }
-
-      if (
-        typeof response === 'object' &&
-        response !== null &&
-        'registrationErrors' in response &&
-        Array.isArray(response.registrationErrors)
-      ) {
-        if ('code' in response && typeof response.code === 'string') {
-          return response.code;
-        }
-        // ValidationPipe のエラー形式の場合
-        return 'VC_REGISTRATION_ERROR';
-      }
-      // その他の Bad Request の場合
       return 'BAD_REQUEST';
     } else if (status === HttpStatus.NOT_FOUND) {
       return 'NOT_FOUND';
     } else if (status === HttpStatus.UNAUTHORIZED) {
-      return 'UNAUTHORIZED';
+      return 'AUTHENTICATION_FAILED';
     } else if (status === HttpStatus.FORBIDDEN) {
-      return 'FORBIDDEN';
+      return 'PERMISSION_DENIED';
     } else if (status === HttpStatus.UNPROCESSABLE_ENTITY) {
-      const response = exception.getResponse();
-      if (
-        typeof response === 'object' &&
-        response !== null &&
-        'code' in response &&
-        response.code === 'VC_VERIFICATION_FAILED'
-      ) {
-        return 'VC_VERIFICATION_FAILED';
-      }
-      return 'UNPROCESSABLE_ENTITY'; // 汎用的な422エラーコード
+      return 'VERIFICATION_INVALID';
     } else if (status === HttpStatus.INTERNAL_SERVER_ERROR) {
-      return 'INTERNAL_ERROR'; // デフォルトの内部エラー
+      return 'INTERNAL_ERROR';
+    } else if (status === HttpStatus.NOT_IMPLEMENTED) {
+      return 'IMPLEMENTED_ERROR';
+    } else if (status === HttpStatus.BAD_GATEWAY) {
+      return 'GATEWAY_ERROR';
     }
     return 'GENERIC_HTTP_ERROR';
   }
 
-  private getErrorMessage(exception: HttpException): string {
+  protected getErrorMessage(exception: HttpException): string {
     // クライアントに返すエラーメッセージを決定
     const status = exception.getStatus
       ? exception.getStatus()
       : HttpStatus.INTERNAL_SERVER_ERROR;
-    const response = exception.getResponse();
 
-    // ValidationPipe のエラーの場合、メッセージは response.message に配列として含まれることが多い
+    const response = exception.getResponse();
     if (
       status === HttpStatus.BAD_REQUEST &&
       typeof response === 'object' &&
@@ -128,8 +122,16 @@ export class AllExceptionsFilter implements ExceptionFilter<HttpException> {
     ) {
       return 'Input validation failed.'; // 例: 固定メッセージ
     }
+    // デフォルトメッセージ
+    if (status === HttpStatus.NOT_FOUND) return 'Resource not found.';
+    if (status === HttpStatus.UNAUTHORIZED) return 'Authentication required.';
+    if (status === HttpStatus.FORBIDDEN)
+      return 'Authentication was successful, but there are no operational permissions.';
+    if (status === HttpStatus.UNPROCESSABLE_ENTITY)
+      return 'Verifable credential data for exists, but verification failed.';
+    if (status === HttpStatus.INTERNAL_SERVER_ERROR)
+      return 'An unexpected error occurred.';
 
-    // HttpException の response にメッセージが含まれている場合
     if (
       typeof response === 'object' &&
       response !== null &&
@@ -141,30 +143,16 @@ export class AllExceptionsFilter implements ExceptionFilter<HttpException> {
     if (typeof response === 'string') {
       return response;
     }
-
-    // デフォルトメッセージ
-    if (status === HttpStatus.NOT_FOUND) return 'Resource not found.';
-    if (status === HttpStatus.UNAUTHORIZED) return 'Authentication required.';
-    if (status === HttpStatus.FORBIDDEN) return 'Access forbidden.';
-    if (status === HttpStatus.UNPROCESSABLE_ENTITY)
-      return 'VC verification faild';
-    if (status === HttpStatus.INTERNAL_SERVER_ERROR)
-      return 'An internal server error occurred.';
-
     return exception.message || 'An unexpected error occurred.';
   }
 
-  private getErrorDetails(
-    exception: HttpException,
-  ):
-    | ValidationErrorDetails[]
-    | VerificationErrorDetails[]
-    | RegistrationErrorDetails[] {
+  protected getErrorDetails(exception: HttpException): GeneralErrorDetails[] {
     const status = exception.getStatus
       ? exception.getStatus()
       : HttpStatus.INTERNAL_SERVER_ERROR;
     const response = exception.getResponse();
     if (
+      //ValidationPipe
       status === HttpStatus.BAD_REQUEST &&
       typeof response === 'object' &&
       response !== null &&
@@ -179,35 +167,39 @@ export class AllExceptionsFilter implements ExceptionFilter<HttpException> {
         }));
       }
     }
-    if (
-      status === HttpStatus.BAD_REQUEST &&
-      typeof response === 'object' &&
-      response !== null &&
-      'registrationErrors' in response &&
-      Array.isArray(response.registrationErrors)
-    ) {
-      const validationErrors = exception.getResponse() as any;
-      if (Array.isArray(validationErrors.registrationErrors)) {
-        return validationErrors.registrationErrors.map((err: any) => ({
-          message: err.message,
-        }));
-      }
-    }
 
     if (
-      status === HttpStatus.UNPROCESSABLE_ENTITY &&
       typeof response === 'object' &&
       response !== null &&
-      'errors' in response &&
-      Array.isArray(response.errors)
+      'generalErrors' in response &&
+      Array.isArray(response.generalErrors)
     ) {
-      const verificationErrorDetails = exception.getResponse() as any;
-      if (Array.isArray(verificationErrorDetails.errors)) {
-        return verificationErrorDetails.errors.map((err: any) => ({
+      const validationErrors = exception.getResponse() as any;
+      if (Array.isArray(validationErrors.generalErrors)) {
+        return validationErrors.generalErrors.map((err: any) => ({
+          code: err.code,
+          field: err.field,
           status: err.status,
           message: err.message,
         }));
       }
+    }
+    if (
+      typeof response === 'object' &&
+      response !== null &&
+      'generalErrors' in response &&
+      typeof response.generalErrors === 'object'
+    ) {
+      const generalErrorDetails = exception.getResponse() as any;
+      const generalErrors = generalErrorDetails.generalErrors;
+      return [
+        {
+          code: generalErrors.code,
+          field: generalErrors.field,
+          status: generalErrors.status,
+          message: generalErrors.message,
+        },
+      ];
     }
     return [];
   }

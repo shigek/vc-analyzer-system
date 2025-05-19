@@ -1,33 +1,3 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { AxiosError } from 'axios';
-
-export class SuccessServiceResponse {
-  @ApiProperty({ description: 'ペイロード', additionalProperties: {} })
-  payload: object;
-  @ApiProperty({ description: 'サービスメタ情報', additionalProperties: {} })
-  serviceMetadata: object;
-}
-export class SuccessResponse {
-  @ApiProperty({ description: 'エラーメッセージ' })
-  message: string;
-  @ApiProperty({ description: 'エラーメッコード' })
-  code: string;
-  @ApiProperty({ required: false, description: 'エラー詳細' })
-  details?: AxiosError['message'];
-  @ApiProperty({ description: '処理識別子' })
-  correlationId: string;
-}
-export class AdditionalProperties {
-  additionalProperties: object;
-}
-export class ResolutionResult {
-  @ApiProperty()
-  didDocument: object;
-  @ApiProperty({ additionalProperties: {} })
-  didResolutionMetadata: object;
-  @ApiProperty({ additionalProperties: {} })
-  didDocumentMetadata: object;
-}
 export const ResolverSuccessResponse = {
   'application/did+json': {
     schema: {

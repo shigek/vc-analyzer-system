@@ -1,39 +1,31 @@
 import { MiddlewareConsumer, Module } from '@nestjs/common';
-import { AppController } from './app.controller';
+import { ExternalApiController } from './app.controller';
 import { AppService } from './app.service';
-
-import { ContextController } from './public/context.controller';
-import { PublicAnalyzerController } from './public/public.controller';
-import { PrivateAnalyzerController } from './private/private.controller';
-
 import { ConfigModule } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
-import { ShareModule } from '@share/share';
+import { ShareModule } from 'lib/share';
 import { AuthModule } from './auth/auth.module';
-import { VerifiersRequesterService } from './services/verifier/verifiers-requester.service';
-import { TrustedListsRequesterService } from './services/manager/trusted-list/trusted-list-requester.service';
-import { StatusListsRequesterService } from './services/manager/status-list/status-list-requester.service';
 import { randomUUID } from 'crypto';
-import { storage } from '@share/share/common/strage/storage';
+import { storage } from 'lib/share/common/strage/storage';
+import { HttpClientModule } from 'lib/httpclient/httpclient.module';
+import { StatusListClientService } from './services/client/status-list.client.service';
+import { ResolverClientService } from './services/client/resolver.client.service';
+import { TrustedListClientService } from './services/client/trusted-list.client.service';
 
 @Module({
   imports: [
     ShareModule,
+    HttpClientModule,
     HttpModule,
     ConfigModule.forRoot({ isGlobal: true }),
     AuthModule,
   ],
-  controllers: [
-    AppController,
-    ContextController,
-    PrivateAnalyzerController,
-    PublicAnalyzerController,
-  ],
+  controllers: [ExternalApiController],
   providers: [
     AppService,
-    VerifiersRequesterService,
-    TrustedListsRequesterService,
-    StatusListsRequesterService,
+    StatusListClientService,
+    ResolverClientService,
+    TrustedListClientService,
   ],
 })
 export class AppModule {

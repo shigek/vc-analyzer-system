@@ -2,41 +2,27 @@ import {
   Controller,
   Get,
   Headers,
-  HttpException,
   Param,
   Res,
+  UseFilters,
 } from '@nestjs/common';
 import { ResolverService } from './resolver.service';
 import { Response } from 'express';
-import { storage } from '@share/share/common/strage/storage';
-import { ConfigService } from '@nestjs/config';
 import {
   ApiHeader,
   ApiOperation,
   ApiParam,
   ApiResponse,
 } from '@nestjs/swagger';
-import {
-  ErrorResponse,
-  ExternalServiceErrorResponse,
-} from './dto/error-response.dto';
+import { ErrorResponse } from 'lib/share/common/dto/error-response.dto';
 import { ResolverSuccessResponse } from './dto/success-response.dto';
+import { ExternalServiceExceptinsFilter } from 'lib/httpclient/filters/external-exceptions.filter';
 
 @Controller('resolve')
+@Controller()
+@UseFilters(ExternalServiceExceptinsFilter)
 export class ResolverController {
-  private readonly serviceName: string;
-  constructor(
-    private readonly resolverService: ResolverService,
-    private configService: ConfigService,
-  ) {
-    const url2 = this.configService.get<string>('DID_RESOLVER_SERVICE_NAME');
-    if (!url2) {
-      throw new Error(
-        'DID_RESOLVER_SERVICE_NAME environment variable is not set.',
-      );
-    }
-    this.serviceName = url2;
-  }
+  constructor(private readonly resolverService: ResolverService) {}
   @Get(':did')
   @ApiOperation({
     summary: 'Resolver DID',
@@ -80,22 +66,22 @@ export class ResolverController {
   @ApiResponse({
     status: 400,
     description: 'リクエストが無効',
-    type: ExternalServiceErrorResponse,
+    type: ErrorResponse,
   })
   @ApiResponse({
     status: 404,
     description: 'データが存在しない',
-    type: ExternalServiceErrorResponse,
+    type: ErrorResponse,
   })
   @ApiResponse({
     status: 406,
     description: 'サポートされていない表現です。',
-    type: ExternalServiceErrorResponse,
+    type: ErrorResponse,
   })
   @ApiResponse({
     status: 410,
     description: '正常に解決されましたが、DIDは無効化されています。',
-    type: ExternalServiceErrorResponse,
+    type: ErrorResponse,
   })
   @ApiResponse({
     status: 500,
@@ -105,41 +91,19 @@ export class ResolverController {
   @ApiResponse({
     status: 501,
     description: 'DIDメソッドはサポートされていません',
-    type: ExternalServiceErrorResponse,
+    type: ErrorResponse,
   })
   async handleGetUniversalResol(
     @Param('did') did: string,
     @Headers('Accept') accept: string,
     @Res() res: Response,
   ): Promise<any> {
-    const request = storage.getStore() as any;
-    try {
-      const { content, didDocument } =
-        await this.resolverService.getDidDocumentFromUniversalResolver(
-          did,
-          accept,
-          request.correlationId,
-        );
-      res.setHeader('Content-Type', content);
-      return res.send(didDocument);
-    } catch (error) {
-      if (error instanceof HttpException) {
-        const endTime = process.hrtime(request.startTime);
-        const processingTimeMillis = (endTime[0] * 1e9 + endTime[1]) / 1e6;
-        const finalErrorResponse = {
-          error: error.getResponse(),
-          serviceMetadata: {
-            serviceName: this.serviceName,
-            version: '0.0.1',
-            timestamp: new Date().toISOString(),
-            processingTimeMillis,
-            correlationId: request.correlationId,
-          },
-        };
-        throw new HttpException(finalErrorResponse, error.getStatus());
-      } else {
-        throw error;
-      }
-    }
+    const { content, didDocument } =
+      await this.resolverService.getDidDocumentFromUniversalResolver(
+        did,
+        accept,
+      );
+    res.setHeader('Content-Type', content);
+    return res.send(didDocument);
   }
 }

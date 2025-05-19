@@ -1,16 +1,24 @@
 {
   "@context": {
     "vc-analyzer": "https://vc-analyzer.example.com/contexts/trusted-list/v1",
+    "cred": "https://www.w3.org/2018/credentials#",
+    "trast": "https://vc-analyzer.example.com/contexts/trusted-list/v1#",
     "TrustedListCredential": {
-      "@id": "https://vc-analyzer.example.com/contexts/trusted-list/v1#TrustedListCredential",
+      "@id": "trast:TrustedListCredential",
       "@type": "@id"
     },
     "TrustedList2025": {
-      "@id": "https://vc-analyzer.example.com/contexts/trusted-list/v1#TrustedList2025",
-      "@type": "@id"
+      "@id": "trast:TrustedList2025",
+      "@type": "@id",
+      "@context": {
+        "validFrom": "trast:validFrom"
+      }
     },
     "trustedIssuerEntry": {
-      "@id": "https://vc-analyzer.example.com/contexts/trusted-list/v1#trustedIssuerEntry"
+      "@id": "trast:trustedIssuerEntry",
+      "@context": {
+        "validUntil": "trast:validUntil"
+      }
     }
   }
 }

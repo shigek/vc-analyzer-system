@@ -1,15 +1,21 @@
 import { MiddlewareConsumer, Module } from '@nestjs/common';
-import { PublicStatusListController } from './public/status-list.controller.public';
-import { ProtectedStatusListController } from './protected/status-list.controller.protected';
-import { StatusListService } from './services/status-list.service';
+import { StatusListController } from './status-list.controller';
+import { StatusListService } from './status-list.service';
 import { ConfigModule } from '@nestjs/config';
 import { randomUUID } from 'crypto';
-import { storage } from '@share/share/common/strage/storage';
-import { AuthModule } from '@share/share/common/auth/auth.module';
+import { storage } from 'lib/share/common/strage/storage';
+import { AuthModule } from 'lib/share/common/auth/auth.module';
+import { ShareModule } from 'lib/share';
+import { PersistenceModule } from 'lib/persistence';
 
 @Module({
-  imports: [AuthModule, ConfigModule.forRoot({ isGlobal: true })],
-  controllers: [ProtectedStatusListController, PublicStatusListController],
+  imports: [
+    PersistenceModule,
+    ShareModule,
+    AuthModule,
+    ConfigModule.forRoot({ isGlobal: true }),
+  ],
+  controllers: [StatusListController],
   providers: [StatusListService],
 })
 export class StatusListModule {

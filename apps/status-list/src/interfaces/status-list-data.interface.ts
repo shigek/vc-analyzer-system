@@ -23,7 +23,7 @@ export interface StatusListVerifableCredential {
   issuer: string;
   issued?: string;
   credentialSubject: CredentialSubject;
-  proof: any; // Proof 構造 (具体的な型はProof Suiteによる)
+  proof?: any; // Proof 構造 (具体的な型はProof Suiteによる)
 }
 export interface CredentialSubject {
   id: string;

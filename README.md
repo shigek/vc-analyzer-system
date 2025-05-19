@@ -106,3 +106,14 @@ cat private-key.pem | sed -e :loop -e 'N; $!b loop' -e 's/\n/\\n/g'
 
 openssl rsa -in private-key.pem -pubout -out public-key.pem
 openssl genrsa -out private-key.pem 2048
+
+
+jsrsasign
+jsonld-signatures
+jsonwebtoken
+reflect-metadata
+uuid
+uint8arrays
+js-crypto-rsa
+elliptic
+crypto

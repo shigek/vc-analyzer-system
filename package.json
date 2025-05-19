@@ -1,6 +1,6 @@
 {
   "name": "vc-analyzer-system",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "",
   "author": "",
   "private": true,
@@ -33,6 +33,7 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.2.0",
+    "@seald-io/nedb": "^4.1.1",
     "@types/passport": "^1.0.17",
     "@types/passport-jwt": "^4.0.1",
     "axios": "^1.9.0",
@@ -41,6 +42,7 @@
     "class-validator": "^0.14.2",
     "crypto": "^1.0.1",
     "elliptic": "^6.6.1",
+    "helmet": "^8.1.0",
     "i": "^0.3.7",
     "jose": "^6.0.11",
     "js-crypto-rsa": "^1.0.7",
@@ -108,7 +110,10 @@
       "<rootDir>/libs/"
     ],
     "moduleNameMapper": {
-      "^@share/share(|/.*)$": "<rootDir>/libs/share/src/$1"
+      "^lib/share(|/.*)$": "<rootDir>/libs/share/src/$1",
+      "^lib/httpclient(|/.*)$": "<rootDir>/libs/httpclient/src/$1",
+      "^lib/metadata(|/.*)$": "<rootDir>/libs/metadata/src/$1",
+      "^lib/persistence(|/.*)$": "<rootDir>/libs/persistence/src/$1"
     }
   }
 }

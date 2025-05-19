@@ -1,36 +1,38 @@
 export const clientPermissionsMapping = {
-  'trusted-issuer-service': {
-    'trusted-list:manage': [
-      'trusted-issuer:create',
-      'trusted-issuer:update',
-      'trusted-issuer:delete',
-    ],
+  'vc-analyzer-management-client': {
+    'trusted-list:manage': ['trusted-list:manage'],
+    'status-list:manage': ['status-list:manage'],
   },
-  'status-list-service': {
-    'status-list:manage': ['status-list:create', 'status-list:update'],
+  'vc-analyzer-admin-client': {
+    'trusted-list:admin': ['trusted-list:admin'],
   },
-  'another-client': [
-    // 別のクライアント
-    'trusted-issuer:read-all',
+  'trusted-issuer-service': ['trusted-list:admin', 'trusted-list:manage'],
+  'trusted-list:manage': [
+    'trusted-issuer:create',
+    'trusted-issuer:update',
+    'trusted-issuer:delete',
   ],
-  // ... 他のクライアントと権限のマッピング ...
+  'trusted-list:admin': ['trusted-issuer:read-all'],
+  'status-list-service': ['status-list:manage'],
+  'status-list:manage': ['status-list:create', 'status-list:update'],
 };
 export function getClientPermissions(
-  clientPermissions: string[],
-  service: string,
+  requiredScopes: string[],
+  clientId: string,
 ): string[] {
-  const clientPermissionsMap = clientPermissionsMapping[service];
-  if (!clientPermissionsMap) {
-    throw new Error('scoope not set.');
+  console.log(clientId);
+  const clientPermissions = clientPermissionsMapping[clientId];
+  const hasRequiredScopes = requiredScopes.filter((scope) =>
+    clientPermissions.includes(scope),
+  );
+  if (hasRequiredScopes.length === 0) {
+    throw new Error(`scoope not set. ${clientId}`);
   }
-
-  const permissions = Object.keys(clientPermissionsMap).map(function (key) {
-    if (clientPermissions.includes(key)) {
-      return clientPermissionsMap[key];
+  let permissions = [];
+  for (const key of hasRequiredScopes) {
+    if (clientPermissionsMapping[key]) {
+      permissions = permissions.concat(clientPermissionsMapping[key]);
     }
-  });
-  if (permissions.length === 0) {
-    throw new Error('scoope not set.');
   }
-  return permissions[0];
+  return permissions;
 }
