@@ -1,30 +1,27 @@
-import { MiddlewareConsumer, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ResolverController } from './resolver.controller';
 import { ResolverService } from './resolver.service';
 import { ConfigModule } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
 import { ShareModule } from 'lib/share';
-import { randomUUID } from 'crypto';
-import { storage } from 'lib/share/common/strage/storage';
+import { LoggerModule } from 'lib/share/common/logger/logger-module';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { LoggingInterceptor } from 'lib/share/common/interceptors/logging.interceptor';
 
 @Module({
-  imports: [ShareModule, HttpModule, ConfigModule.forRoot({ isGlobal: true })],
+  imports: [
+    LoggerModule,
+    ShareModule,
+    HttpModule,
+    ConfigModule.forRoot({ isGlobal: true }),
+  ],
   controllers: [ResolverController],
-  providers: [ResolverService],
+  providers: [
+    ResolverService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
+  ],
 })
-export class ResolverModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply((req: any, _res: Response, next: () => void) => {
-        // リクエストIDの追加
-        req.startTime = process.hrtime();
-        if (!req.header('X-Correlation-ID')) {
-          req.correlationId = randomUUID();
-        } else {
-          req.correlationId = req.header('X-Correlation-ID');
-        }
-        storage.run(req, () => next());
-      })
-      .forRoutes('*');
-  }
-}
+export class ResolverModule {}

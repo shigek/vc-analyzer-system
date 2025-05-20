@@ -12,6 +12,7 @@ import {
   GeneralErrorDetails,
 } from 'lib/share/interfaces/response/error-response.interface'; // 前に定義したErrorResponseをインポート
 import { ServiceMetadata } from 'lib/share/interfaces/response/serviceMetadata.interface'; // ServiceMetadataをインポート
+import { asyncLocalStorage } from '../middleware/correlation-id.middleware';
 
 @Catch(HttpException)
 export class AllExceptionsFilter implements ExceptionFilter<HttpException> {
@@ -44,14 +45,28 @@ export class AllExceptionsFilter implements ExceptionFilter<HttpException> {
     version: string,
     request: any,
   ): ServiceMetadata {
-    const endTime = process.hrtime(request.startTime);
-    const processingTimeMillis = (endTime[0] * 1e9 + endTime[1]) / 1e6;
+    const info: { correlationId: string; processingTimeMillis: number } = {
+      correlationId: '',
+      processingTimeMillis: 0,
+    };
+    const store = asyncLocalStorage.getStore();
+    if (store) {
+      if (store.has('correlationId')) {
+        info.correlationId = store.get('correlationId');
+      }
+
+      if (store.has('requestDurationMs')) {
+        info.processingTimeMillis = store.get('requestDurationMs');
+      }
+    }
+    // const endTime = process.hrtime(request.startTime);
+    // const processingTimeMillis = (endTime[0] * 1e9 + endTime[1]) / 1e6;
     return {
       serviceName: serviceName,
       version: version,
       timestamp: new Date().toISOString(),
-      processingTimeMillis,
-      correlationId: request.correlationId,
+      processingTimeMillis: info.processingTimeMillis,
+      correlationId: info.correlationId,
     };
   }
 
@@ -59,14 +74,27 @@ export class AllExceptionsFilter implements ExceptionFilter<HttpException> {
     request: any,
     _status: number,
   ): ServiceMetadata {
-    const endTime = process.hrtime(request.startTime);
-    const processingTimeMillis = (endTime[0] * 1e9 + endTime[1]) / 1e6;
+    const info: { correlationId: string; processingTimeMillis: number } = {
+      correlationId: '',
+      processingTimeMillis: 0,
+    };
+    const store = asyncLocalStorage.getStore();
+    if (store) {
+      if (store.has('correlationId')) {
+        info.correlationId = store.get('correlationId');
+      }
+      if (store.has('requestDurationMs')) {
+        info.processingTimeMillis = store.get('requestDurationMs');
+      }
+    }
+    // const endTime = process.hrtime(request.startTime);
+    // const processingTimeMillis = (endTime[0] * 1e9 + endTime[1]) / 1e6;
     return {
       serviceName: 'VC Analyzer Service', // 例
       version: '0.0.1', // 例
       timestamp: new Date().toISOString(),
-      processingTimeMillis,
-      correlationId: request.correlationId,
+      processingTimeMillis: info.processingTimeMillis,
+      correlationId: info.correlationId,
     };
   }
 

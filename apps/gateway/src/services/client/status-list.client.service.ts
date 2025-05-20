@@ -56,7 +56,6 @@ export class StatusListClientService implements OnModuleInit {
     userContext: {
       scopes: string[];
       clientId: string;
-      correlationId: string;
     },
   ): Promise<any> {
     try {
@@ -85,7 +84,6 @@ export class StatusListClientService implements OnModuleInit {
     userContext: {
       scopes: string[];
       clientId: string;
-      correlationId: string;
     },
   ): Promise<any> {
     console.log(`[${this.constructor.name}] Calling createStatus.`);
@@ -122,7 +120,6 @@ export class StatusListClientService implements OnModuleInit {
     userContext: {
       scopes: string[];
       clientId: string;
-      correlationId: string;
     },
   ): Promise<any> {
     try {

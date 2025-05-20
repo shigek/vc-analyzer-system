@@ -51,7 +51,6 @@ export class TrustedListClientService implements OnModuleInit {
     userContext: {
       scopes: string[];
       clientId: string;
-      correlationId: string;
     },
   ): Promise<any> {
     try {
@@ -78,7 +77,6 @@ export class TrustedListClientService implements OnModuleInit {
   async getIssuers(userContext: {
     scopes: string[];
     clientId: string;
-    correlationId: string;
   }): Promise<any> {
     try {
       const service = this.SERVICE_NAME;
@@ -104,7 +102,6 @@ export class TrustedListClientService implements OnModuleInit {
     userContext: {
       scopes: string[];
       clientId: string;
-      correlationId: string;
     },
   ): Promise<any> {
     try {
@@ -137,7 +134,6 @@ export class TrustedListClientService implements OnModuleInit {
     userContext: {
       scopes: string[];
       clientId: string;
-      correlationId: string;
     },
   ): Promise<any> {
     try {
@@ -162,7 +158,6 @@ export class TrustedListClientService implements OnModuleInit {
     userContext: {
       scopes: string[];
       clientId: string;
-      correlationId: string;
     },
   ): Promise<any> {
     try {

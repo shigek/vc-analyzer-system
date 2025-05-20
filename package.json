@@ -1,6 +1,6 @@
 {
   "name": "vc-analyzer-system",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "",
   "author": "",
   "private": true,
@@ -59,7 +59,8 @@
     "rxjs": "^7.8.1",
     "swagger-ui-express": "^5.0.1",
     "uint8arrays": "^5.1.0",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "winston": "^3.17.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

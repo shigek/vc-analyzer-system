@@ -14,7 +14,6 @@ import { StatusListService } from './status-list.service';
 import { StatusListCreateDto } from './dto/status-list-create.dto';
 import { StatusListUpdateDto } from './dto/status-list-update.dto';
 import { Response } from 'express';
-import { storage } from 'lib/share/common/strage/storage';
 import { ConfigService } from '@nestjs/config';
 import { CommonResponse } from 'lib/share/interfaces/response/common-response.interface';
 import { AuthGuard } from '@nestjs/passport';
@@ -38,6 +37,7 @@ import {
 import { StatusListExceptinsFilter } from './common/filters/all-exceptions.filter';
 import { ShareService } from 'lib/share';
 import { ServiceMetadata } from 'lib/share/interfaces/response/serviceMetadata.interface';
+import { processTime } from 'lib/share/utils/process-time';
 
 @Controller('status-lists')
 @UseFilters(StatusListExceptinsFilter)
@@ -106,12 +106,10 @@ export class StatusListController {
     @Res() res: Response,
     @Body(new ValidationPipe()) createDto: StatusListCreateDto,
   ): Promise<any> {
-    const request = storage.getStore() as any;
     //1. 登録する
     const { cid, statusListData } =
       await this.statusListService.createExecute(createDto);
-    const endTime = process.hrtime(request.startTime);
-    const processingTimeMillis = (endTime[0] * 1e9 + endTime[1]) / 1e6;
+    const processingTimeMillis = processTime();
     const payload: StatusListResponse = {
       listId: statusListData.id.replace('urn:', ''),
       message: 'Status List created successfully.',
@@ -178,14 +176,12 @@ export class StatusListController {
     @Param('index') index: number,
     @Res() res: Response,
   ): Promise<any> {
-    const request = storage.getStore() as any;
     // 初期処理
     const internalId = `urn:${listId}`;
     // ステータスリスト状態確認確認
     const { status, bitValue, cid } =
       await this.statusListService.verifyExecute(internalId, index);
-    const endTime = process.hrtime(request.startTime);
-    const processingTimeMillis = (endTime[0] * 1e9 + endTime[1]) / 1e6;
+    const processingTimeMillis = processTime();
     const payload: StatusListResponse = {
       listId,
       index,
@@ -268,12 +264,10 @@ export class StatusListController {
     @Res() res: Response,
     @Body(new ValidationPipe()) updateDto: StatusListUpdateDto,
   ): Promise<any> {
-    const request = storage.getStore() as any;
     const internalId = `urn:${listId}`;
     const { status, cid, changedValue } =
       await this.statusListService.updateExecute(internalId, index, updateDto);
-    const endTime = process.hrtime(request.startTime);
-    const processingTimeMillis = (endTime[0] * 1e9 + endTime[1]) / 1e6;
+    const processingTimeMillis = processTime();
     const payload: StatusListResponse = {
       listId,
       index,

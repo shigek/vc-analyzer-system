@@ -1,37 +1,29 @@
-import { MiddlewareConsumer, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TrustedListService } from './trusted-list.service';
 import { ConfigModule } from '@nestjs/config';
 import { ShareModule } from 'lib/share/share.module';
-import type { Response } from 'express';
-import { randomUUID } from 'crypto';
-import { storage } from 'lib/share/common/strage/storage';
 import { AuthModule } from 'lib/share/common/auth/auth.module';
 import { PersistenceModule } from 'lib/persistence';
 import { TrustedListController } from './trusted-list.controller';
+import { LoggerModule } from 'lib/share/common/logger/logger-module';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { LoggingInterceptor } from 'lib/share/common/interceptors/logging.interceptor';
 
 @Module({
   imports: [
+    LoggerModule,
     PersistenceModule,
     AuthModule,
     ShareModule,
     ConfigModule.forRoot({ isGlobal: true }),
   ],
   controllers: [TrustedListController],
-  providers: [TrustedListService],
+  providers: [
+    TrustedListService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
+  ],
 })
-export class TrustedListModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply((req: any, _res: Response, next: () => void) => {
-        // リクエストIDの追加
-        req.startTime = process.hrtime();
-        if (!req.header('X-Correlation-ID')) {
-          req.correlationId = randomUUID();
-        } else {
-          req.correlationId = req.header('X-Correlation-ID');
-        }
-        storage.run(req, () => next());
-      })
-      .forRoutes('*');
-  }
-}
+export class TrustedListModule {}

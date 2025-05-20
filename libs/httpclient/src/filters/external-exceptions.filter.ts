@@ -13,6 +13,7 @@ import { ServiceMetadata } from 'lib/share/interfaces/response/serviceMetadata.i
 import { ConfigService } from '@nestjs/config';
 import { ShareService } from 'lib/share';
 import { ExternalServiceError } from '../dto/error-response.dto';
+import { asyncLocalStorage } from 'lib/share/common/middleware/correlation-id.middleware';
 
 @Catch(ExternalServiceError)
 export class ExternalServiceExceptinsFilter
@@ -57,14 +58,28 @@ export class ExternalServiceExceptinsFilter
     request: any,
     _status: number,
   ): ServiceMetadata {
-    const endTime = process.hrtime(request.startTime);
-    const processingTimeMillis = (endTime[0] * 1e9 + endTime[1]) / 1e6;
+    const info: { correlationId: string; processingTimeMillis: number } = {
+      correlationId: '',
+      processingTimeMillis: 0,
+    };
+    const store = asyncLocalStorage.getStore();
+    if (store) {
+      if (store.has('correlationId')) {
+        info.correlationId = store.get('correlationId');
+      }
+
+      if (store.has('requestDurationMs')) {
+        info.processingTimeMillis = store.get('requestDurationMs');
+      }
+    }
+    // const endTime = process.hrtime(request.startTime);
+    // const processingTimeMillis = (endTime[0] * 1e9 + endTime[1]) / 1e6;
     return {
       serviceName: this.serviceName,
       version: this.shareService.getVersion(),
       timestamp: new Date().toISOString(),
-      processingTimeMillis,
-      correlationId: request.correlationId,
+      processingTimeMillis: info.processingTimeMillis,
+      correlationId: info.correlationId,
     };
   }
   protected getServiceErrorCode(exception: ExternalServiceError): string {

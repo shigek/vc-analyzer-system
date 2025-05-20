@@ -15,7 +15,6 @@ import { TrustedListService } from './trusted-list.service';
 import { Response } from 'express';
 import { CommonResponse } from 'lib/share/interfaces/response/common-response.interface';
 import { ConfigService } from '@nestjs/config';
-import { storage } from 'lib/share/common/strage/storage';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -36,6 +35,7 @@ import { Permissions } from 'lib/share/common/permissions';
 import { SubjectDidRegistrationDto } from './dto/subject-did-registration';
 import { SubjectDidUpdateDto } from './dto/subject-did-update';
 import { ServiceMetadata } from 'lib/share/interfaces/response/serviceMetadata.interface';
+import { processTime } from 'lib/share/utils/process-time';
 
 @Controller('trusted-issuers')
 @UseFilters(TrustedListExceptinsFilter)
@@ -101,14 +101,11 @@ export class TrustedListController {
     @Body(new ValidationPipe()) createDto: SubjectDidRegistrationDto,
     @Res() res: Response,
   ): Promise<any> {
-    const request = storage.getStore() as any;
     const { subjectDid } = createDto;
-    console.log(createDto);
     //1. 登録する
     const { cid } = await this.trustedListService.createExecute(createDto);
 
-    const endTime = process.hrtime(request.startTime);
-    const processingTimeMillis = (endTime[0] * 1e9 + endTime[1]) / 1e6;
+    const processingTimeMillis = processTime();
     const payload: TrustedIssuerResponse = {
       trustedIssuer: subjectDid,
       message: 'Trusted List created successfully.',
@@ -185,14 +182,12 @@ export class TrustedListController {
     @Res() res: Response,
     @Body(new ValidationPipe()) updateDto: SubjectDidUpdateDto,
   ): Promise<any> {
-    const request = storage.getStore() as any;
     //1.更新する
     const { validUntil, cid } = await this.trustedListService.updateExecute(
       subjectDid,
       updateDto,
     );
-    const endTime = process.hrtime(request.startTime);
-    const processingTimeMillis = (endTime[0] * 1e9 + endTime[1]) / 1e6;
+    const processingTimeMillis = processTime();
     const payload: TrustedIssuerResponse = {
       trustedIssuer: subjectDid,
       validUntil,
@@ -314,13 +309,10 @@ export class TrustedListController {
     @Param('subjectDid') subjectDid: string,
     @Res() res: Response,
   ): Promise<any> {
-    const request = storage.getStore() as any;
-
     //1.管理情報を削除する
     await this.trustedListService.deleteExecute(subjectDid);
 
-    const endTime = process.hrtime(request.startTime);
-    const processingTimeMillis = (endTime[0] * 1e9 + endTime[1]) / 1e6;
+    const processingTimeMillis = processTime();
     const payload: TrustedIssuerResponse = {
       deletedTrustedIssuer: subjectDid,
       message: 'Trusted issuer delete successfully.',
@@ -381,13 +373,11 @@ export class TrustedListController {
     @Param('subjectDid') subjectDid: string,
     @Res() res: Response,
   ): Promise<any> {
-    const request = storage.getStore() as any;
     //1.状態を確認する
     const { status, cid } =
       await this.trustedListService.verifyExecute(subjectDid);
 
-    const endTime = process.hrtime(request.startTime);
-    const processingTimeMillis = (endTime[0] * 1e9 + endTime[1]) / 1e6;
+    const processingTimeMillis = processTime();
     const payload: TrustedIssuerResponse = {
       trustedIssuer: subjectDid,
       status,
@@ -474,12 +464,9 @@ export class TrustedListController {
   @ApiBearerAuth('gateway-jwt')
   @Get()
   async hundleGetIssuers(@Res() res: Response): Promise<any> {
-    const request = storage.getStore() as any;
-
     //1.リストを取得する
     const payload = this.trustedListService.listQueryExecute();
-    const endTime = process.hrtime(request.startTime);
-    const processingTimeMillis = (endTime[0] * 1e9 + endTime[1]) / 1e6;
+    const processingTimeMillis = processTime();
     const metadata: ServiceMetadata = {
       serviceName: this.serviceName,
       version: this.shareService.getVersion(),

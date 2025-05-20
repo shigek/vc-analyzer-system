@@ -23,7 +23,6 @@ import {
 } from '@nestjs/swagger';
 import { ResolverClientService } from './services/client/resolver.client.service';
 import { StatusListClientService } from './services/client/status-list.client.service';
-import { storage } from 'lib/share/common/strage/storage';
 import { ErrorResponse } from 'lib/share/common/dto/error-response.dto';
 import * as resolver from 'apps/resolver/src/dto/success-response.dto';
 import * as statusList from 'apps/status-list/src/dto/success-response.dto';
@@ -55,8 +54,8 @@ export class ExternalApiController {
     private readonly appService: AppService,
   ) {}
   @Get()
-  haldleHello(@Res() res: Response) {
-    return res.send('Hello VC Anarizer');
+  haldleHello() {
+    return 'Hello VC Anarizer';
   }
   @Get('/contexts/trusted-list/v1')
   async handleContextLoader(@Res() res: Response): Promise<any> {
@@ -136,15 +135,10 @@ export class ExternalApiController {
     @Headers('Accept') accept: string,
     @Param('did') did: string,
   ): Promise<any> {
-    const request = storage.getStore() as any;
-    console.log(request.correlationId);
     const userContext: {
       permission?: string[];
       clientId?: string;
-      correlationId: string;
-    } = {
-      correlationId: request.correlationId,
-    };
+    } = {};
     return await this.resolverClientService.getDidDocument(
       did,
       accept,
@@ -188,11 +182,9 @@ export class ExternalApiController {
     @Param('listId') listId: string,
     @Param('index') index: number,
   ): any {
-    const request = storage.getStore() as any;
     const userContext = getUserContext(req.user);
     return this.statusListClientService.getStatus(listId, index, {
       ...userContext,
-      correlationId: request.correlationId,
     });
   }
   @ApiHeader({
@@ -240,11 +232,9 @@ export class ExternalApiController {
   @RequiredPermissions(Permissions.STATUS_LIST_MANAGER)
   @Post('/manager/status-lists')
   async handleCreateStatus(@Req() req: Request): Promise<any> {
-    const request = storage.getStore() as any;
     const userContext = getUserContext(req.user);
     return this.statusListClientService.createStatus(req.body, {
       ...userContext,
-      correlationId: request.correlationId,
     });
   }
   @ApiHeader({
@@ -298,11 +288,9 @@ export class ExternalApiController {
     @Param('index') index: number,
     @Req() req: Request,
   ): Promise<any> {
-    const request = storage.getStore() as any;
     const userContext = getUserContext(req.user);
     return this.statusListClientService.updateStatus(listId, index, req.body, {
       ...userContext,
-      correlationId: request.correlationId,
     });
   }
   @ApiOperation({ summary: 'Trusted listの状態を取得する' })
@@ -334,11 +322,9 @@ export class ExternalApiController {
   })
   @Get('/verifier/trusted-issuers/:did')
   handleGetIssuer(@Req() req: Request, @Param('did') did: string): any {
-    const request = storage.getStore() as any;
     const userContext = getUserContext(req.user);
     return this.trustedListClientService.getIssuer(did, {
       ...userContext,
-      correlationId: request.correlationId,
     });
   }
   @ApiHeader({
@@ -381,11 +367,9 @@ export class ExternalApiController {
   @RequiredPermissions(Permissions.TRUSTED_LIST_ADMIN)
   @Get('/admin/trusted-issuers')
   async handleGetIssuers(@Req() req: Request): Promise<any> {
-    const request = storage.getStore() as any;
     const userContext = getUserContext(req.user);
     return this.trustedListClientService.getIssuers({
       ...userContext,
-      correlationId: request.correlationId,
     });
   }
   @ApiHeader({
@@ -429,11 +413,9 @@ export class ExternalApiController {
   @RequiredPermissions(Permissions.TRUSTED_LIST_MANAGER)
   @Post('/manager/trusted-issuers')
   async handleCreateIssuer(@Req() req: Request): Promise<any> {
-    const request = storage.getStore() as any;
     const userContext = getUserContext(req.user);
     return this.trustedListClientService.createIssuer(req.body, {
       ...userContext,
-      correlationId: request.correlationId,
     });
   }
   @ApiHeader({
@@ -481,11 +463,9 @@ export class ExternalApiController {
     @Param('subjectDid') subjectDid: string,
     @Req() req: Request,
   ): Promise<any> {
-    const request = storage.getStore() as any;
     const userContext = getUserContext(req.user);
     return this.trustedListClientService.updateIssuer(subjectDid, req.body, {
       ...userContext,
-      correlationId: request.correlationId,
     });
   }
   @ApiHeader({
@@ -536,11 +516,9 @@ export class ExternalApiController {
     @Param('subjectDid') subjectDid: string,
     @Req() req: Request,
   ): Promise<any> {
-    const request = storage.getStore() as any;
     const userContext = getUserContext(req.user);
     return this.trustedListClientService.deleteIssuer(subjectDid, {
       ...userContext,
-      correlationId: request.correlationId,
     });
   }
 }

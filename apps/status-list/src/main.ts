@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { StatusListModule } from './status-list.module';
 import { HttpException, HttpStatus, ValidationPipe } from '@nestjs/common';
 import { ValidationError } from 'class-validator';
-import { CustomLogger } from 'lib/share/common/logger/custom-logger';
+import { CustomLogger } from 'lib/share/common/logger/custom-logger.service';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { dump } from 'js-yaml';
 import fs from 'fs';
@@ -26,6 +26,8 @@ async function bootstrap() {
       },
     }),
   );
+
+  // アプリケーション全体で CustomLogger を使用するように設定
   app.useLogger(new CustomLogger());
   const config = new DocumentBuilder()
     .setTitle('VC Analyzer System Status List API') // API のタイトル

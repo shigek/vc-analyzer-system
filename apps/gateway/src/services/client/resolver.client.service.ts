@@ -51,7 +51,6 @@ export class ResolverClientService implements OnModuleInit {
     userContext: {
       scopes?: string[];
       clientId?: string;
-      correlationId: string;
     },
   ): Promise<any> {
     try {

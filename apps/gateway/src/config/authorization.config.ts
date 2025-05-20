@@ -20,7 +20,6 @@ export function getClientPermissions(
   requiredScopes: string[],
   clientId: string,
 ): string[] {
-  console.log(clientId);
   const clientPermissions = clientPermissionsMapping[clientId];
   const hasRequiredScopes = requiredScopes.filter((scope) =>
     clientPermissions.includes(scope),

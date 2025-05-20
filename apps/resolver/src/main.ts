@@ -3,6 +3,7 @@ import { ResolverModule } from './resolver.module';
 import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 import { dump } from 'js-yaml';
 import fs from 'fs';
+import { CustomLogger } from 'lib/share/common/logger/custom-logger.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(ResolverModule);
@@ -18,6 +19,8 @@ async function bootstrap() {
     //.addSecurityRequirements('bearer')
     .build();
 
+  // アプリケーション全体で CustomLogger を使用するように設定
+  app.useLogger(app.get(CustomLogger));
   const document = SwaggerModule.createDocument(app, config);
   fs.writeFileSync('./swagger-resolver-spec.yaml', dump(document, {}));
   SwaggerModule.setup('api', app, document); // '/api' というパスで Swagger UI を有効にする

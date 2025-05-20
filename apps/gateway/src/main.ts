@@ -4,6 +4,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { dump } from 'js-yaml';
 import fs from 'fs';
 import helmet from 'helmet';
+import { CustomLogger } from 'lib/share/common/logger/custom-logger.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: true });
@@ -24,6 +25,10 @@ async function bootstrap() {
   fs.writeFileSync('./swagger-gateway-spec.yaml', dump(document, {}));
   SwaggerModule.setup('api', app, document); // '/api' というパスで Swagger UI を有効にする
   app.use(helmet());
+
+  // アプリケーション全体で CustomLogger を使用するように設定
+  app.useLogger(await app.resolve(CustomLogger));
+
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

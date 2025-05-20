@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InternalAuthService } from './internal-auth.service';
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import { asyncLocalStorage } from 'lib/share/common/middleware/correlation-id.middleware';
 
 export interface RequestConfigWithInternalAuthContext
   extends InternalAxiosRequestConfig {
@@ -47,7 +48,12 @@ export class HttpClientConfigService {
               );
             config.headers['Authorization'] = `Bearer ${token}`;
             console.log(`[HttpClientConfigService] Interceptor: Token added.`);
-            config.headers['X-Correlation-ID'] = context.correlationId;
+            const store = asyncLocalStorage.getStore();
+            const correlationId =
+              store && store.has('correlationId')
+                ? store.get('correlationId')
+                : undefined;
+            config.headers['X-Correlation-ID'] = correlationId;
           } catch (error) {
             console.error(
               `[HttpClientConfigService] Interceptor Error generating token:`,
