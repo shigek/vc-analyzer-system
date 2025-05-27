@@ -2,10 +2,11 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsIn, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
 export class StatusListCreateDto {
-  @ApiProperty({ example: '1000' })
+  @ApiProperty({ description: '省略時は、', example: '1000' })
   @IsNumber()
   @Min(2)
-  size: number;
+  @IsOptional()
+  size?: number;
 
   @ApiProperty({
     example: 'revocation',

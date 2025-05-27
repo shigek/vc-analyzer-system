@@ -23,7 +23,7 @@ const KEY_FILE_PATH = path.join(
   __dirname,
   '../',
   '.certs',
-  'dmMtYW5hcnl6ZXItc3lzdGVtCg.key',
+  '1b568dbd-1113-432d-9279-f9b8760725c2.key',
 );
 
 
@@ -31,7 +31,8 @@ const KEY_FILE_PATH = path.join(
 (async () => {
   try {
     console.log('Generated Test JWT:');
-    const token = await signToken(testPayload, KEY_FILE_PATH, jwtOptions);
+    const token = await signToken(testPayload, KEY_FILE_PATH, { kid: '1b568dbd-1113-432d-9279-f9b8760725c2' },
+          jwtOptions);
     console.log(token);
     await verify(token, KEY_FILE_PATH);
     console.log('\nUse this token in the Authorization: Bearer <token> header.');

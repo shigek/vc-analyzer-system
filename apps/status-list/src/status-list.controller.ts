@@ -11,8 +11,8 @@ import {
   Get,
 } from '@nestjs/common';
 import { StatusListService } from './status-list.service';
-import { StatusListCreateDto } from './dto/status-list-create.dto';
-import { StatusListUpdateDto } from './dto/status-list-update.dto';
+import { StatusListCreateDto } from 'lib/share/common/dto/status-list-create.dto';
+import { StatusListUpdateDto } from 'lib/share/common/dto/status-list-update.dto';
 import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { CommonResponse } from 'lib/share/interfaces/response/common-response.interface';

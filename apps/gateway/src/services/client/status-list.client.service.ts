@@ -69,7 +69,7 @@ export class StatusListClientService implements OnModuleInit {
       );
       return response.data;
     } catch (error) {
-      this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD);
+      this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD, error.message);
       throw getAxionResponse(error, 'Status List', [listId, `${index}`]);
     }
   }
@@ -100,7 +100,7 @@ export class StatusListClientService implements OnModuleInit {
       );
       return response.data;
     } catch (error) {
-      this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD);
+      this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD, error.message);
       throw getAxionResponse(error, 'Status List', ['create']);
     }
   }
@@ -135,7 +135,7 @@ export class StatusListClientService implements OnModuleInit {
       );
       return response.data;
     } catch (error) {
-      this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD);
+      this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD, error.message);
       throw getAxionResponse(error, 'Status List', [listId, `${index}`]);
     }
   }

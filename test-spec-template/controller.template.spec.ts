@@ -59,8 +59,8 @@ type MockedAxiosInterceptorManager<V> = {
 
 type MockedAxiosInstance = Partial<{
   [K in keyof AxiosInstance]: AxiosInstance[K] extends (...args: any[]) => any
-    ? jest.Mock<ReturnType<AxiosInstance[K]>, Parameters<AxiosInstance[K]>>
-    : AxiosInstance[K];
+  ? jest.Mock<ReturnType<AxiosInstance[K]>, Parameters<AxiosInstance[K]>>
+  : AxiosInstance[K];
 }> & {
   // interceptors を正確な型で定義
   interceptors: {
@@ -173,11 +173,7 @@ describe('AppController', () => {
       const req = context.switchToHttp().getRequest<Request>();
       // `req.user` に、戦略が設定すると期待される値を設定
       req.user = {
-        scopes: [
-          'status-list:manage',
-          'trusted-list:manage',
-          'trusted-list:admin',
-        ],
+        scopes: ['status-list:manage', 'trusted-list:manage', 'trusted-list:admin'],
         clientId: 'vc-analyzer-management-client',
       };
       return true; // 常に認証成功を返す
@@ -250,12 +246,12 @@ describe('AppController', () => {
 
     const globalResponseUse = mockedAxios.interceptors.response
       .use as jest.Mock<
-      number,
-      [
-        (value: AxiosResponse) => AxiosResponse | Promise<AxiosResponse>,
-        (error: any) => any,
-      ]
-    >;
+        number,
+        [
+          (value: AxiosResponse) => AxiosResponse | Promise<AxiosResponse>,
+          (error: any) => any,
+        ]
+      >;
     const globalResponseEject = mockedAxios.interceptors.response
       .eject as jest.Mock<void, [id: number]>;
     const globalResponseClear = mockedAxios.interceptors.response
@@ -468,7 +464,7 @@ describe('AppController', () => {
   it('should call /status-lists/:listId/status/:index', async () => {
     const dto = {
       status: 'revoked',
-    };
+    }
     const mockJwksResponseData = {
       a: 'hogehoge',
     };
@@ -488,7 +484,7 @@ describe('AppController', () => {
   it('should call /trusted-issuers', async () => {
     const dto = {
       subjectDid: 'did:key:abcd',
-    };
+    }
     const mockJwksResponseData = {
       a: 'hogehoge',
     };
@@ -508,7 +504,7 @@ describe('AppController', () => {
   it('should call /trusted-issuers/:subjectDid', async () => {
     const dto = {
       validUntil: '2024-11-03T01:23:56.789Z',
-    };
+    }
     const mockJwksResponseData = {
       a: 'hogehoge',
     };
@@ -543,7 +539,7 @@ describe('AppController', () => {
   });
   it('should call /trusted-issuers', async () => {
     const mockJwksResponseData = {
-      a: [{ data: 'hogehoge' }],
+      a: [{data: 'hogehoge'}],
     };
     httpClientMock.get!.mockResolvedValueOnce({
       data: mockJwksResponseData,

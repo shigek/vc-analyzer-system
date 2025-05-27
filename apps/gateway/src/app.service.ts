@@ -22,7 +22,7 @@ export class AppService {
    * @param userContext
    * @returns 取得したステータス情報
    */
-  async getContext(): Promise<any> {
+  async getContext(): Promise<{ status: number; data?: string }> {
     return fs
       .readFile(CONTEXT_FILE_PATH, 'utf8')
       .then((data) => {

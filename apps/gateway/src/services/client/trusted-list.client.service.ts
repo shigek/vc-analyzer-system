@@ -64,7 +64,7 @@ export class TrustedListClientService implements OnModuleInit {
       );
       return response.data;
     } catch (error) {
-      this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD);
+      this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD, error.message);
       throw getAxionResponse(error, 'Trusted List', [subjectDid]);
     }
   }
@@ -87,7 +87,7 @@ export class TrustedListClientService implements OnModuleInit {
       } as RequestConfigWithInternalAuthContext);
       return response.data;
     } catch (error) {
-      this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD);
+      this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD, error.message);
       throw getAxionResponse(error, 'Trusted List', []);
     }
   }
@@ -117,7 +117,7 @@ export class TrustedListClientService implements OnModuleInit {
       );
       return response.data;
     } catch (error) {
-      this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD);
+      this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD, error.message);
       throw getAxionResponse(error, 'Trusted List', ['create']);
     }
   }
@@ -149,7 +149,7 @@ export class TrustedListClientService implements OnModuleInit {
       );
       return response.data;
     } catch (error) {
-      this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD);
+      this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD, error.message);
       throw getAxionResponse(error, 'Trusted List', [subjectDid]);
     }
   }
@@ -172,7 +172,7 @@ export class TrustedListClientService implements OnModuleInit {
       );
       return response.data;
     } catch (error) {
-      this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD);
+      this.logger.error(ERROR_MESSAGES.EXTERNAL_API_CALL_FAILD, error.message);
       throw getAxionResponse(error, 'Trusted list', [subjectDid]);
     }
   }

@@ -5,6 +5,7 @@ import { JwtStrategy } from './jwt.strategy';
 import { ConfigService } from '@nestjs/config';
 import fs from 'fs';
 import path from 'path';
+import { AuthService } from './auth.service';
 
 const PRIVATE_KEY_FILE_PATH = path.join(
   __dirname,
@@ -40,7 +41,7 @@ const PUBLIC_KEY_FILE_PATH = path.join(
   ],
   providers: [
     JwtStrategy, // 作成するStrategyをプロバイダーに登録
-    // AuthService // 認証サービスなど
+    AuthService, // 認証サービスなど
   ],
   // exports: [JwtStrategy, PassportModule],
 })

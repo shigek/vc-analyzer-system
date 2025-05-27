@@ -2,12 +2,15 @@ import jose from 'jose';
 import { promises as fs } from 'fs';
 
 // Sign the JWT
-export async function signToken(payload: { [index: string]: any }, pem: string, jwtOptions: { expiresIn: string }) {
+export async function signToken(payload: { [index: string]: any }
+  , pem: string
+  , headerOptions = {}
+  , jwtOptions: { expiresIn: string }) {
   const key = await readPem(pem);
   const jsonKey = JSON.parse(key);
   const privateKey = await jose.importPKCS8(jsonKey.private, jsonKey.algorithm);
   const jwt = await (new jose.SignJWT(payload)
-    .setProtectedHeader({ alg: jsonKey.algorithm })
+    .setProtectedHeader({ ...headerOptions, alg: jsonKey.algorithm })
     .setIssuedAt()
     .setExpirationTime(jwtOptions.expiresIn)
     .sign(privateKey));

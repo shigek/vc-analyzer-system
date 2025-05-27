@@ -11,6 +11,7 @@ import {
   Post,
   Patch,
   Delete,
+  Body,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import {
@@ -24,9 +25,9 @@ import {
 import { ResolverClientService } from './services/client/resolver.client.service';
 import { StatusListClientService } from './services/client/status-list.client.service';
 import { ErrorResponse } from 'lib/share/common/dto/error-response.dto';
-import * as resolver from 'apps/resolver/src/dto/success-response.dto';
-import * as statusList from 'apps/status-list/src/dto/success-response.dto';
-import * as trustedList from 'apps/trusted-list/src/dto/success-response.dto';
+import * as resolver from 'lib/share/common/dto/resolver-success-response.dto';
+import * as statusList from 'lib/share/common/dto/status-list-success-response.dto';
+import * as trustedList from 'lib/share/common/dto/trusted-list-success-response.dto';
 import { ExternalServiceExceptinsFilter } from 'lib/httpclient/filters/external-exceptions.filter';
 import { AppService } from './app.service';
 import { TrustedListClientService } from './services/client/trusted-list.client.service';
@@ -37,10 +38,10 @@ import {
   RequiredPermissions,
 } from './auth/guard/permissions.guard';
 import { Permissions } from 'lib/share/common/permissions';
-import { StatusListCreateDto } from 'apps/status-list/src/dto/status-list-create.dto';
-import { StatusListUpdateDto } from 'apps/status-list/src/dto/status-list-update.dto';
-import { SubjectDidRegistrationDto } from 'apps/trusted-list/src/dto/subject-did-registration';
-import { SubjectDidUpdateDto } from 'apps/trusted-list/src/dto/subject-did-update';
+import { StatusListCreateDto } from 'lib/share/common/dto/status-list-create.dto';
+import { StatusListUpdateDto } from 'lib/share/common/dto/status-list-update.dto';
+import { SubjectDidRegistrationDto } from 'lib/share/common/dto/subject-did-registration';
+import { SubjectDidUpdateDto } from 'lib/share/common/dto/subject-did-update';
 import { AllExceptionsFilter } from 'lib/share/common/filters/all-exceptions.filter';
 
 @Controller('/analyzer-gateway')
@@ -55,7 +56,7 @@ export class ExternalApiController {
   ) {}
   @Get()
   haldleHello() {
-    return 'Hello VC Anarizer';
+    return this.appService.getHello();
   }
   @Get('/contexts/trusted-list/v1')
   async handleContextLoader(@Res() res: Response): Promise<any> {
@@ -231,9 +232,12 @@ export class ExternalApiController {
   @UseGuards(AuthGuard('jwt'), PermissionsGuard)
   @RequiredPermissions(Permissions.STATUS_LIST_MANAGER)
   @Post('/manager/status-lists')
-  async handleCreateStatus(@Req() req: Request): Promise<any> {
+  async handleCreateStatus(
+    @Req() req: Request,
+    @Body() body: Record<string, any>,
+  ): Promise<any> {
     const userContext = getUserContext(req.user);
-    return this.statusListClientService.createStatus(req.body, {
+    return this.statusListClientService.createStatus(body, {
       ...userContext,
     });
   }
@@ -287,9 +291,10 @@ export class ExternalApiController {
     @Param('listId') listId: string,
     @Param('index') index: number,
     @Req() req: Request,
+    @Body() body: Record<string, any>,
   ): Promise<any> {
     const userContext = getUserContext(req.user);
-    return this.statusListClientService.updateStatus(listId, index, req.body, {
+    return this.statusListClientService.updateStatus(listId, index, body, {
       ...userContext,
     });
   }
@@ -412,9 +417,12 @@ export class ExternalApiController {
   @UseGuards(AuthGuard('jwt'), PermissionsGuard)
   @RequiredPermissions(Permissions.TRUSTED_LIST_MANAGER)
   @Post('/manager/trusted-issuers')
-  async handleCreateIssuer(@Req() req: Request): Promise<any> {
+  async handleCreateIssuer(
+    @Req() req: Request,
+    @Body() body: Record<string, any>,
+  ): Promise<any> {
     const userContext = getUserContext(req.user);
-    return this.trustedListClientService.createIssuer(req.body, {
+    return this.trustedListClientService.createIssuer(body, {
       ...userContext,
     });
   }
@@ -462,9 +470,10 @@ export class ExternalApiController {
   async handleUpdateIssuer(
     @Param('subjectDid') subjectDid: string,
     @Req() req: Request,
+    @Body() body: Record<string, any>,
   ): Promise<any> {
     const userContext = getUserContext(req.user);
-    return this.trustedListClientService.updateIssuer(subjectDid, req.body, {
+    return this.trustedListClientService.updateIssuer(subjectDid, body, {
       ...userContext,
     });
   }
@@ -512,7 +521,7 @@ export class ExternalApiController {
   @UseGuards(AuthGuard('jwt'), PermissionsGuard)
   @RequiredPermissions(Permissions.TRUSTED_LIST_MANAGER)
   @Delete('/manager/trusted-issuers/:subjectDid')
-  async handleDeleteTrustedIssuer(
+  async handleDeleteIssuer(
     @Param('subjectDid') subjectDid: string,
     @Req() req: Request,
   ): Promise<any> {

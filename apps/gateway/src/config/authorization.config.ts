@@ -25,7 +25,7 @@ export function getClientPermissions(
     clientPermissions.includes(scope),
   );
   if (hasRequiredScopes.length === 0) {
-    throw new Error(`scoope not set. ${clientId}`);
+    throw new Error(`scope not set. ${clientId}`);
   }
   let permissions = [];
   for (const key of hasRequiredScopes) {

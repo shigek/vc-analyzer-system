@@ -2,7 +2,15 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "declaration": false,
-    "outDir": "../../dist/apps/gateway"
+    "outDir": "../../dist/apps/gateway",
+    "isolatedModules": false,
+    "baseUrl": ".",
+    "paths": {
+      // ★ここを追加
+      "@test/*": ["test/*"], // test/utils/jwt.helper を @test/utils/jwt.helper で参照可能にする
+      // もし src/ ディレクトリのエイリアスが必要なら
+      // "@src/*": ["src/*"]
+    }    
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]

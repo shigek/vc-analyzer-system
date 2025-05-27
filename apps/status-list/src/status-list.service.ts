@@ -29,13 +29,13 @@ import {
   KeyFileDataLoader,
 } from 'lib/share/common/key/provider.key';
 import { PersistenceService } from 'lib/persistence';
-import { StatusListCreateDto } from './dto/status-list-create.dto';
+import { StatusListCreateDto } from 'lib/share/common/dto/status-list-create.dto';
+import { StatusListUpdateDto } from 'lib/share/common/dto/status-list-update.dto';
 import {
   getCodetoName,
   getMapping,
   getNametoCode,
 } from './config/bitmapping.config';
-import { StatusListUpdateDto } from './dto/status-list-update.dto';
 import { createVC } from './common/vc/template.vc';
 import { PersistenceServiceError } from 'lib/share/common/dto/error-response.dto';
 

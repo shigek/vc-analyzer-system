@@ -2,8 +2,7 @@ import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import fs from 'fs';
-import path from 'path';
+import { AuthService } from './auth.service';
 // import { AuthService } from './auth.service'; // 必要に応じて、ユーザーやクライアントの情報を取得するサービス
 
 // JWTペイロードの型定義（JWTに含まれる情報の型）
@@ -14,18 +13,11 @@ export interface JwtPayload {
   scope: string;
   // ... その他のペイロード情報 ...
 }
-const PUBLIC_KEY_FILE_PATH = path.join(
-  __dirname,
-  '../../..',
-  '.certs',
-  'public-key.pem',
-);
-
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   private readonly logger = new Logger(JwtStrategy.name);
   constructor(
-    // private authService: AuthService // 必要に応じてサービスを注入
+    private readonly authService: AuthService, // 必要に応じてサービスを注入
     private readonly configService: ConfigService,
   ) {
     super({
@@ -34,7 +26,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         configService.getOrThrow<string>('IGNORE_EXPIRATION') === 'true'
           ? true
           : false, // @@@@@JWTの有効期限切れをチェックする（通常はfalse）
-      secretOrKey: fs.readFileSync(PUBLIC_KEY_FILE_PATH, 'utf8'),
+
+      // secretOrKey: fs.readFileSync(PUBLIC_KEY_FILE_PATH, 'utf8'),
+      secretOrKeyProvider: authService.secretOrKeyProvider,
       algorithms: ['RS256'],
     });
     this.logger.log('JwtStrategy constructor called');

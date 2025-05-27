@@ -51,8 +51,10 @@
     "jsonwebtoken": "^9.0.2",
     "jsrsasign": "^11.1.0",
     "kubo-rpc-client": "^3.0.4",
+    "lru-cache": "^11.1.0",
     "node-gzip": "^1.1.2",
     "npm": "^11.3.0",
+    "openid-client": "5.7.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.2",
@@ -115,6 +117,13 @@
       "^lib/httpclient(|/.*)$": "<rootDir>/libs/httpclient/src/$1",
       "^lib/metadata(|/.*)$": "<rootDir>/libs/metadata/src/$1",
       "^lib/persistence(|/.*)$": "<rootDir>/libs/persistence/src/$1"
-    }
+    },
+    "coveragePathIgnorePatterns": [
+      ".*\\.module\\.ts$",
+      ".*\\.e2e-spec\\.ts$",
+      "main\\.ts$",
+      "swagger\\.ts$",
+      "index\\.ts$"
+    ]
   }
 }

@@ -32,8 +32,8 @@ import { ShareService } from 'lib/share';
 import { RequiredPermissions } from 'lib/share/common/auth/guard/permissions.guard';
 import { AuthGuard } from '@nestjs/passport';
 import { Permissions } from 'lib/share/common/permissions';
-import { SubjectDidRegistrationDto } from './dto/subject-did-registration';
-import { SubjectDidUpdateDto } from './dto/subject-did-update';
+import { SubjectDidRegistrationDto } from 'lib/share/common/dto/subject-did-registration';
+import { SubjectDidUpdateDto } from 'lib/share/common/dto/subject-did-update';
 import { ServiceMetadata } from 'lib/share/interfaces/response/serviceMetadata.interface';
 import { processTime } from 'lib/share/utils/process-time';
 
